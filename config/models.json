@@ -1,27 +1,15 @@
 {
   "providers": {
-    "lm-studio": {
+    "lmstudio": {
+      "api": "openai-completions",
+      "apiKey": "lmstudio",
       "baseUrl": "http://host.docker.internal:1234/v1",
-      "api": "openai-completions",
-      "apiKey": "lm-studio",
-      "compat": {
-        "supportsDeveloperRole": false,
-        "supportsReasoningEffort": false
-      },
       "models": [
-        { "id": "qwen2.5-coder-32b-instruct", "contextWindow": 32768 }
-      ]
-    },
-    "lan-inference": {
-      "baseUrl": "http://192.168.1.50:1234/v1",
-      "api": "openai-completions",
-      "apiKey": "lm-studio",
-      "compat": {
-        "supportsDeveloperRole": false,
-        "supportsReasoningEffort": false
-      },
-      "models": [
-        { "id": "qwen2.5-coder-32b-instruct", "contextWindow": 32768 }
+        {
+          "id": "qwen/qwen3.8-27b",
+          "reasoning": false,
+          "contextWindow": 262144
+        }
       ]
     }
   }

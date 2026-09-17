@@ -121,6 +121,9 @@ Expect `npm:pi-mcp-extension` resolved to `/usr/local/lib/node_modules/pi-mcp-ex
 
 ## Part D — Validate inference
 
+> Confirmed working (this environment): model `qwen/qwen3.8-27b` via `http://host.docker.internal:1234/v1`
+> (host LM Link → desktop). The desktop is also reachable directly at `http://192.168.1.158:1234/v1`.
+
 ### D1. Confirm the inference server is up
 
 From the host, check the OpenAI-compatible endpoint:
@@ -146,11 +149,11 @@ Expect `200`. (For a LAN server, curl the LAN IP directly — the bridge network
 
 ```bash
 docker run --rm -v ~/.config/pi-glider:/root/.pi/agent --entrypoint bash pi-glider:latest -c \
-  'pi -p "Reply with exactly: OK" --model lan-inference/<your-model-id> --no-session'
+  'pi -p "Reply with exactly: OK" --model lmstudio/qwen/qwen3.8-27b --no-session'
 ```
 
-Substitute `<your-model-id>` with a model from `pi --list-models` (or `--provider lan-inference`).
-Expect the model to reply. This proves end-to-end inference through the container.
+Substitute the model id with one from `pi --list-models` (the `--model` value is `provider/model-id`).
+Expect the model to reply (e.g. `OK`). This proves end-to-end inference through the container.
 
 ### D4. Interactive test (optional)
 
