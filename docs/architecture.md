@@ -78,6 +78,10 @@ health checks).
 Config is read from `~/.pi/agent/mcp.json` (global, our mounted agentDir) and `.pi/mcp.json`
 (project override, shallow-merged per-server). See `config/mcp.json` for the shape.
 
+`pi-mcp-extension` is baked into the image at build time (global npm) and registered via
+`config/settings.json` (`packages`). It is not installed at runtime, so it survives container
+teardown.
+
 Burp is the assumed default MCP server (team standard), reached over SSE. Operators can add any
 other MCP servers by editing `mcp.json`.
 
