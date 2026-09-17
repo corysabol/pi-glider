@@ -65,17 +65,32 @@ function renderLines(g: number[][], theme: Theme): string[] {
 
 // ─── Static glider ───────────────────────────────────────────────────────────
 
-const GLIDER = ["·█·", "··█", "███"];
+const GLIDER_PATTERN = ["·█·", "··█", "███"];
+const SCALE = 2; // each cell becomes SCALE × SCALE blocks
+
+/** Scale a cell pattern up so each cell is a uniform SCALE×SCALE block. */
+function scalePattern(pattern: string[], scale: number): string[] {
+  const lines: string[] = [];
+  for (const row of pattern) {
+    const scaledRow = row
+      .split("")
+      .map((c) => c.repeat(scale))
+      .join("");
+    for (let i = 0; i < scale; i++) lines.push(scaledRow);
+  }
+  return lines;
+}
 
 function renderStatic(theme: Theme): string[] {
-  const lines = GLIDER.map((row) =>
+  const lines = scalePattern(GLIDER_PATTERN, SCALE).map((row) =>
     row
       .split("")
       .map((c) => (c === "█" ? theme.fg("accent", ALIVE) : theme.fg("muted", DEAD)))
       .join(""),
   );
   // Put the label beside the glider's middle row.
-  lines[1] += `  ${theme.bold("pi-glider")}${theme.fg("dim", ` v${VERSION}`)}`;
+  const mid = Math.floor((lines.length - 1) / 2);
+  lines[mid] += `  ${theme.bold("pi-glider")}${theme.fg("dim", ` v${VERSION}`)}`;
   return lines;
 }
 

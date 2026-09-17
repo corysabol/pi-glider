@@ -95,9 +95,12 @@ startup header with a Conway's Game of Life **glider** (the old-school hacker sy
 named after) rendered in Unicode full blocks, beside a `pi-glider vX.Y.Z` label:
 
 ```
-·█·
-··█  pi-glider v0.74.2
-███
+··██··
+··██··
+····██  pi-glider v0.74.2
+····██
+██████
+██████
 ```
 
 `scripts/install.sh` copies it into `~/.config/pi-glider/extensions/`, where Pi auto-loads it. To
@@ -107,5 +110,5 @@ before running `install.sh`).
 The glider is static by default. An animated variant (the glider looping across the grid via
 toroidal wrap-around) is implemented but disabled, because each frame forces a full TUI re-render
 that snaps the terminal scroll to the header. Set `ANIMATE = true` in
-`extensions/pi-glider-banner/index.ts` to re-enable it (`TICK_MS`, `COLS`/`ROWS`, `ALIVE`/`DEAD`
-glyphs are also tweakable there).
+`extensions/pi-glider-banner/index.ts` to re-enable it. Other knobs there: `SCALE` (cell size,
+default 2), `TICK_MS`, `COLS`/`ROWS`, and the `ALIVE`/`DEAD` glyphs.
