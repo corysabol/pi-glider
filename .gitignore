@@ -1,0 +1,13 @@
+# macOS
+.DS_Store
+
+# Logs
+*.log
+
+# Per-engagement working dirs (if created inside the repo)
+/engagement/
+/engagements/
+
+# Note: config/*.json are committed as templates and must use $ENV_VAR references
+# only (no real secrets). Operators keep live secrets in ~/.config/pi-glider/,
+# which is outside this repo.

@@ -1,0 +1,5 @@
+# Working artifacts — evidence is preserved on disk but typically not committed.
+# Keep RoE.md and notes/ under version control if desired.
+/recon/
+/evidence/
+/sessions/
