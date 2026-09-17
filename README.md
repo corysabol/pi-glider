@@ -93,24 +93,24 @@ See [`docs/smoke-test.md`](docs/smoke-test.md) Part E for validation steps.
 `extensions/pi-glider-banner/` is a small Pi extension that replaces the built-in `pi vX.Y.Z`
 startup header with a Conway's Game of Life **glider** (the old-school hacker symbol the project is
 named after) rendered in Unicode full blocks (alive) and light-shade blocks (dead), beside a
-`pi-glider vX.Y.Z` label:
+block-letter `PI-GLIDER` wordmark and the version:
 
 ```
-░░░░████░░░░
-░░░░████░░░░
-░░░░░░░░████  pi-glider v0.74.2
-░░░░░░░░████
-████████████
-████████████
+░░░░████░░░░  █████ █████       █████ █     █████ ████  █████ ████
+░░░░████░░░░  █   █   █         █     █       █   █   █ █     █   █
+░░░░░░░░████  █████   █    ███  █ ███ █       █   █   █ ████  ████
+░░░░░░░░████  █       █         █   █ █       █   █   █ █     █ █
+████████████  █     █████       █████ █████ █████ ████  █████ █  █
+████████████  v0.74.2
 ```
 
 `scripts/install.sh` copies it into `~/.config/pi-glider/extensions/`, where Pi auto-loads it. To
 disable it, delete `~/.config/pi-glider/extensions/pi-glider-banner/` (or remove it from the repo
 before running `install.sh`).
 
-The glider is static by default. An animated variant (the glider looping across the grid via
-toroidal wrap-around) is implemented but disabled, because each frame forces a full TUI re-render
-that snaps the terminal scroll to the header. Set `ANIMATE = true` in
-`extensions/pi-glider-banner/index.ts` to re-enable it. Other knobs there: `CELL_W`/`CELL_H`
-(cell size in characters, default 4×2 — kept 2:1 so cells render square, since terminal cells are
-~twice as tall as wide), `TICK_MS`, `COLS`/`ROWS`, and the `ALIVE`/`DEAD` glyphs.
+The glider animates in place for a short time at startup: it cycles through its four Game-of-Life
+phases (a subtle morph) and then freezes on the canonical glider. Set `ANIMATE = false` in
+`extensions/pi-glider-banner/index.ts` to render it fully static. Other knobs there:
+`ANIMATE_FRAMES` (phase steps before freezing, default 8), `TICK_MS` (default 150),
+`CELL_W`/`CELL_H` (cell size in characters, default 4×2 — kept 2:1 so cells render square, since
+terminal cells are ~twice as tall as wide), and the `ALIVE`/`DEAD` glyphs.

@@ -3,75 +3,37 @@
  *
  * Replaces Pi's built-in "pi vX.Y.Z" header with a Conway's Game of Life
  * "glider" (the old-school hacker symbol the project is named after) rendered
- * in Unicode full blocks, beside a "pi-glider vX.Y.Z" label.
+ * in Unicode blocks, beside a block-letter "PI-GLIDER" wordmark and the
+ * version.
  *
- * The glider is shown statically by default. Animating it (the glider looping
- * across the grid via toroidal wrap-around) is supported but disabled: each
- * animation frame triggers a full TUI re-render, which snaps the terminal
- * scroll to the header. Set ANIMATE = true to re-enable the loop.
+ * The glider animates in place for a short time at startup — it cycles through
+ * its four Game-of-Life phases (so the shape subtly morphs) and then freezes on
+ * the canonical glider. Set ANIMATE = false to render it fully static.
  */
 
 import type { ExtensionAPI, Theme } from "@earendil-works/pi-coding-agent";
 import { VERSION } from "@earendil-works/pi-coding-agent";
 
-// ─── Game of Life (toroidal wrap-around) ─────────────────────────────────────
+// ─── Glyphs & sizing ─────────────────────────────────────────────────────────
 
-const COLS = 28;
-const ROWS = 7;
 const ALIVE = "█";
 const DEAD = "░"; // light shade — subtle background block for dead cells
-const TICK_MS = 100;
-
-/** Animate the glider looping across the grid at startup. See header note. */
-const ANIMATE = false;
-
-/** Build a fresh grid with the classic 3x3 glider placed at the top-left. */
-function makeGrid(): number[][] {
-  const g = Array.from({ length: ROWS }, () => new Array<number>(COLS).fill(0));
-  g[0][1] = 1;
-  g[1][2] = 1;
-  g[2][0] = 1;
-  g[2][1] = 1;
-  g[2][2] = 1;
-  return g;
-}
-
-/** Advance one generation (B3/S23) with wrap-around boundaries so the glider loops. */
-function step(g: number[][]): number[][] {
-  const next = Array.from({ length: ROWS }, () => new Array<number>(COLS).fill(0));
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
-      let n = 0;
-      for (let dr = -1; dr <= 1; dr++) {
-        for (let dc = -1; dc <= 1; dc++) {
-          if (dr === 0 && dc === 0) continue;
-          const rr = (r + dr + ROWS) % ROWS;
-          const cc = (c + dc + COLS) % COLS;
-          n += g[rr][cc];
-        }
-      }
-      next[r][c] = g[r][c] ? (n === 2 || n === 3 ? 1 : 0) : n === 3 ? 1 : 0;
-    }
-  }
-  return next;
-}
-
-/** Render a grid to colored Unicode-block lines (alive = accent, dead = muted). */
-function renderLines(g: number[][], theme: Theme): string[] {
-  return g.map((row) =>
-    row.map((cell) => (cell ? theme.fg("accent", ALIVE) : theme.fg("muted", DEAD))).join(""),
-  );
-}
-
-// ─── Static glider ───────────────────────────────────────────────────────────
-
-const GLIDER_PATTERN = ["░█░", "░░█", "███"];
 
 // Terminal cells are ~2:1 (taller than wide), so use twice as many horizontal
 // characters as vertical to make each cell render as a square rather than a
 // column. CELL_W = 2 × CELL_H.
 const CELL_W = 4; // horizontal characters per cell
 const CELL_H = 2; // vertical characters per cell
+
+// The glider's four Game-of-Life phases (B3/S23). Cycling through them makes
+// the shape morph in place; after four phases it returns to the canonical
+// glider.
+const GLIDER_PHASES = [
+  ["░█░", "░░█", "███"],
+  ["█░█", "░██", "░█░"],
+  ["░░█", "█░█", "░██"],
+  ["█░░", "░██", "██░"],
+];
 
 /** Scale a cell pattern up so each cell is a uniform CELL_W×CELL_H block. */
 function scalePattern(pattern: string[], cellW: number, cellH: number): string[] {
@@ -86,18 +48,60 @@ function scalePattern(pattern: string[], cellW: number, cellH: number): string[]
   return lines;
 }
 
-function renderStatic(theme: Theme): string[] {
-  const lines = scalePattern(GLIDER_PATTERN, CELL_W, CELL_H).map((row) =>
+// ─── Block-letter wordmark ───────────────────────────────────────────────────
+
+// 5×5 block font for the "PI-GLIDER" wordmark. Spaces are transparent.
+const FONT: Record<string, string[]> = {
+  P: ["█████", "█   █", "█████", "█    ", "█    "],
+  I: ["█████", "  █  ", "  █  ", "  █  ", "█████"],
+  "-": ["     ", "     ", " ███ ", "     ", "     "],
+  G: ["█████", "█    ", "█ ███", "█   █", "█████"],
+  L: ["█    ", "█    ", "█    ", "█    ", "█████"],
+  D: ["████ ", "█   █", "█   █", "█   █", "████ "],
+  E: ["█████", "█    ", "████ ", "█    ", "█████"],
+  R: ["████ ", "█   █", "████ ", "█ █  ", "█  █ "],
+};
+
+const BLANK = ["     ", "     ", "     ", "     ", "     "];
+
+/** Render a wordmark string to 5 rows of block-letter text. */
+function renderText(text: string): string[] {
+  const rows = ["", "", "", "", ""];
+  for (const ch of text) {
+    const glyph = FONT[ch] ?? BLANK;
+    for (let r = 0; r < 5; r++) rows[r] += glyph[r] + " ";
+  }
+  return rows.map((r) => r.trimEnd());
+}
+
+// ─── Static header ───────────────────────────────────────────────────────────
+
+function renderStatic(theme: Theme, pattern: string[]): string[] {
+  const glider = scalePattern(pattern, CELL_W, CELL_H).map((row) =>
     row
       .split("")
       .map((c) => (c === ALIVE ? theme.fg("accent", ALIVE) : theme.fg("muted", DEAD)))
       .join(""),
   );
-  // Put the label beside the glider's middle row.
-  const mid = Math.floor((lines.length - 1) / 2);
-  lines[mid] += `  ${theme.bold("pi-glider")}${theme.fg("dim", ` v${VERSION}`)}`;
+
+  const text = renderText("PI-GLIDER").map((row) => theme.fg("accent", row));
+  const version = theme.fg("dim", `v${VERSION}`);
+
+  // Glider is 6 rows tall; the wordmark (5 rows) + version (1 row) = 6 rows.
+  const lines: string[] = [];
+  for (let i = 0; i < glider.length; i++) {
+    const right = i < text.length ? text[i] : version;
+    lines.push(`${glider[i]}  ${right}`);
+  }
   return lines;
 }
+
+// ─── Startup animation ───────────────────────────────────────────────────────
+
+// Animate the glider through its phases in place for a short time, then freeze.
+const ANIMATE = true;
+const ANIMATE_FRAMES = 8; // phase steps before freezing (multiple of 4 → ends on phase 0)
+const TICK_MS = 150;
 
 // ─── Extension ───────────────────────────────────────────────────────────────
 
@@ -107,15 +111,20 @@ export default function (pi: ExtensionAPI): void {
 
     ctx.ui.setHeader((tui, theme) => {
       if (ANIMATE) {
-        let grid = makeGrid();
+        let phase = 0;
+        let frames = 0;
         const component = {
           render(_width: number): string[] {
-            return renderLines(grid, theme);
+            return renderStatic(theme, GLIDER_PHASES[phase]);
           },
           invalidate(): void {},
         };
         const timer = setInterval(() => {
-          grid = step(grid);
+          phase = (phase + 1) % GLIDER_PHASES.length;
+          if (++frames >= ANIMATE_FRAMES) {
+            clearInterval(timer);
+            phase = 0; // freeze on the canonical glider
+          }
           tui.requestRender();
         }, TICK_MS);
         (component as typeof component & { dispose?: () => void }).dispose = () =>
@@ -123,7 +132,7 @@ export default function (pi: ExtensionAPI): void {
         return component;
       }
 
-      const lines = renderStatic(theme);
+      const lines = renderStatic(theme, GLIDER_PHASES[0]);
       return {
         render(_width: number): string[] {
           return lines;
