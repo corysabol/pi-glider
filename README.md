@@ -33,6 +33,8 @@ docker build -t pi-glider:latest container/
 ./scripts/pi-glider.sh ~/engagements/acme
 ```
 
+The wrapper auto-starts the Burp MCP bridge (see below) if it isn't already running.
+
 The container mounts:
 
 - `~/.config/pi-glider/` → `/root/.pi/agent` (Pi agentDir: config + skills)
@@ -46,7 +48,7 @@ config/        canonical agentDir templates (models.json, mcp.json, settings.jso
 skills/        source-of-truth skills (core/, recon/, testing/, tools/, mcp/, workflows/)
 container/     Dockerfile, docker-compose.yml, entrypoint, pdtm tool list
 templates/     engagement templates (RoE.md, .gitignore)
-scripts/       install.sh (seed config) + pi-glider.sh (launch wrapper)
+scripts/       install.sh (seed config) + pi-glider.sh (launch wrapper) + burp-mcp-bridge.py (Host-rewriting proxy)
 docs/          architecture, skill-authoring, engagement-workflow, smoke-test
 ```
 
@@ -58,3 +60,29 @@ portable across Pi, Claude Code, and Bionic. See [`docs/skill-authoring.md`](doc
 Categories: `core/` (operating manual, authoring, engagement setup), `recon/` (subdomain, DNS,
 port, HTTP, fingerprint, JS, cloud, CIDR), `testing/` (nuclei), `tools/` (per-tool reference),
 `mcp/` (Burp), and `workflows/` (external recon sweep).
+
+## Burp MCP bridge
+
+Burp Suite's MCP server rejects any request whose `Host`/`Origin`/`Referer` header isn't
+`localhost` or `127.0.0.1` (hardcoded DNS-rebinding protection). The container reaches the host via
+`host.docker.internal`, which Burp rejects with `403` — and changing Burp's listen address to
+`0.0.0.0` does **not** bypass it, because the guard checks the `Host` header value, not the bind
+interface.
+
+`scripts/burp-mcp-bridge.py` is a small host-side reverse proxy that listens on `0.0.0.0:9877` and
+forwards to Burp on `127.0.0.1:9876`, rewriting the `Host` header to `127.0.0.1:9876` on **every**
+request (so HTTP keep-alive works). `config/mcp.json` points Burp at the bridge
+(`http://host.docker.internal:9877`).
+
+The launch wrapper (`scripts/pi-glider.sh`) starts the bridge automatically if it isn't already
+running and tears it down when the session ends. To run it manually:
+
+```bash
+python3 scripts/burp-mcp-bridge.py
+```
+
+Environment: `BRIDGE_LISTEN_HOST`/`BRIDGE_LISTEN_PORT` (default `0.0.0.0`/`9877`) and
+`BRIDGE_TARGET_HOST`/`BRIDGE_TARGET_PORT` (default `127.0.0.1`/`9876`). On Linux you can instead
+use `--network=host` and point `mcp.json` directly at `http://127.0.0.1:9876` (no bridge needed).
+
+See [`docs/smoke-test.md`](docs/smoke-test.md) Part E for validation steps.

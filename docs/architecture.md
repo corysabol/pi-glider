@@ -85,6 +85,18 @@ teardown.
 Burp is the assumed default MCP server (team standard), reached over SSE. Operators can add any
 other MCP servers by editing `mcp.json`.
 
+Burp's MCP server rejects non-localhost `Host` headers (hardcoded DNS-rebinding protection in
+`KtorServerManager.kt`: `Host`/`Origin`/`Referer` must be `localhost` or `127.0.0.1`, and the port
+must match). This is a hard guardrail — changing Burp's listen address to `0.0.0.0` does not bypass
+it, because the check is on the `Host` header value, not the bind interface. The container reaches
+the host via `host.docker.internal`, which Burp rejects with `403`.
+
+To work around it, the container reaches Burp through a small host-side bridge
+(`scripts/burp-mcp-bridge.py`) that rewrites the `Host` header to `127.0.0.1:9876` on **every**
+request (not just the first), so HTTP keep-alive connections work. `config/mcp.json` points at the
+bridge (`host.docker.internal:9877`), which forwards to Burp on `127.0.0.1:9876`. On Linux,
+`--network=host` can reach Burp directly instead (no bridge needed).
+
 ## 6. Networking
 
 Default is the **bridge network**. Host-side services are reached via `host.docker.internal`;

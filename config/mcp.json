@@ -7,7 +7,7 @@
   "mcpServers": {
     "burp": {
       "transport": "sse",
-      "url": "http://host.docker.internal:9876",
+      "url": "http://host.docker.internal:9877",
       "lifecycle": "lazy"
     }
   }

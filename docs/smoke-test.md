@@ -183,35 +183,66 @@ curl -s -m 3 -N http://127.0.0.1:9876/ | head -3
 
 Expect an SSE stream beginning with `event: endpoint` (the MCP handshake).
 
-### E2. Reachability + the Host-header check
+### E2. Start the Host-rewriting bridge
+
+Burp's MCP server rejects non-localhost `Host` headers (hardcoded DNS-rebinding protection in
+`KtorServerManager.kt`: only `localhost`/`127.0.0.1` are allowed for `Host`/`Origin`/`Referer`).
+Changing Burp's listen address to `0.0.0.0:9876` does **not** help — the guard checks the `Host`
+header value, not the bind interface. The container reaches the host via `host.docker.internal`,
+which Burp rejects with `403`.
+
+Run the bridge on the host:
 
 ```bash
-docker run --rm --entrypoint bash pi-glider:latest \
-  -c 'curl -s -o /dev/null -w "%{http_code}\n" http://host.docker.internal:9876/'
+python3 scripts/burp-mcp-bridge.py
 ```
 
-- `200` → Burp already accepts the container; skip to E4.
-- `403` → Burp validates the `Host` header and rejects `host.docker.internal`. Apply E3.
+It listens on `0.0.0.0:9877` and forwards to `127.0.0.1:9876`, rewriting the `Host` header to
+`127.0.0.1:9876` on **every** request (not just the first), so HTTP keep-alive connections work.
+The MCP SSE flow is: `GET /` returns `event: endpoint` with a `sessionId`, then each `POST /?sessionId=…`
+carries that id as a query param. The bridge rewrites the `Host` on all of those POSTs.
 
-### E3. Allow the container to reach Burp
+### E3. Verify the bridge from the container
 
-Burp's MCP server listens on `127.0.0.1` and rejects non-localhost `Host` headers. Options:
+```bash
+docker run --rm --add-host=host.docker.internal:host-gateway --entrypoint bash pi-glider:latest \
+  -c 'curl -s -m 3 -N -i http://host.docker.internal:9877/ | head -12'
+```
 
-1. **Change the listen host** — in the MCP Server extension's *Advanced options*, set the host to
-   `0.0.0.0` (or your host IP), reload the extension, and re-run E2. This is the simplest fix.
-2. **External-access fork** — if the stock extension still rejects after (1), use a fork that
-   patches external access (e.g. `mcp-server-external-access`).
-3. **Linux only** — use `--network=host` and connect to `http://127.0.0.1:9876` directly (the
-   `Host` header then matches and is accepted). Not available on Docker Desktop for Mac.
+Expect `HTTP/1.1 200` with `Content-Type: text/event-stream` (the MCP handshake).
 
-### E4. Point mcp.json at Burp
+### E3b. Verify the full POST flow (handshake + tool list)
+
+The GET alone is not enough — Burp rejects POSTs aggressively, and the bridge must rewrite `Host`
+on the follow-up POSTs too. Confirm the full SSE session works end-to-end with the MCP SDK:
+
+```bash
+docker run --rm --add-host=host.docker.internal:host-gateway \
+  --entrypoint bash pi-glider:latest -c '
+  node --input-type=module -e "
+    const SDK = \"/usr/local/lib/node_modules/pi-mcp-extension/node_modules/@modelcontextprotocol/sdk/dist/cjs\";
+    const { Client } = await import(SDK + \"/client/index.js\");
+    const { SSEClientTransport } = await import(SDK + \"/client/sse.js\");
+    const c = new Client({ name: \"t\", version: \"1\" });
+    await c.connect(new SSEClientTransport(new URL(\"http://host.docker.internal:9877\")));
+    const tools = await c.listTools();
+    console.log(\"TOOLS:\", tools.tools.map(t => t.name).join(\", \"));
+    await c.close();
+  "
+'
+```
+
+Expect a list of `mcp_burp_*` tools (e.g. `get_proxy_http_history`, `send_http1_request`, …).
+This proves the bridge rewrites `Host` on the keep-alive POSTs, not just the initial GET.
+
+### E4. Point mcp.json at the bridge
 
 ```bash
 $EDITOR ~/.config/pi-glider/mcp.json
 ```
 
-Set `mcpServers.burp.url` to `http://host.docker.internal:9876` (SSE is at the root path, not
-`/sse`). On Linux with `--network=host`, use `http://127.0.0.1:9876`.
+Set `mcpServers.burp.url` to `http://host.docker.internal:9877`. (On Linux you can instead use
+`--network=host` and point directly at `http://127.0.0.1:9876`.)
 
 ### E5. Confirm the MCP server connects (interactive)
 
@@ -264,7 +295,7 @@ After a session, confirm Pi session files land in `~/engagements/<name>/sessions
 |---------|--------------|-----|
 | `pi --list-models` empty | wrong `baseUrl`/`apiKey` in `models.json` | fix `baseUrl`; keyless servers need a dummy `apiKey` |
 | inference `pi -p` hangs | server not reachable from container | verify D2; use `host.docker.internal` (host) or LAN IP |
-| Burp MCP `403` | Host-header validation | see E3 |
+| Burp MCP `403` | Host-header validation (DNS-rebinding) | run the bridge (E2) |
 | Burp MCP `/mcp` shows disconnected | `lifecycle: lazy` (not yet used) | `/mcp:start burp`, or use a Burp tool |
 | tools `MISSING` | image rebuilt before tool list change | rebuild (B1) |
 | extension missing after teardown | installed at runtime (not baked in) | add to Dockerfile + `config/settings.json` `packages`, rebuild |
