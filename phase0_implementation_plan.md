@@ -162,20 +162,20 @@ Consequences:
 ```json
 {
   "providers": {
-    "lan-inference": {
+    "lmstudio": {
       "baseUrl": "http://host.docker.internal:1234/v1",
       "api": "openai-completions",
-      "apiKey": "lm-studio",
-      "compat": { "supportsDeveloperRole": false },
+      "apiKey": "lmstudio",
       "models": [
-        { "id": "qwen2.5-coder-32b", "contextWindow": 32768 }
+        { "id": "qwen/qwen3.8-27b", "reasoning": false, "contextWindow": 262144 }
       ]
     }
   }
 }
 ```
 
-Notes: `apiKey` is a placeholder for keyless local servers; `compat.supportsDeveloperRole=false` for OpenAI-compatible backends that reject the `developer` role. LAN servers use their LAN IP instead of `host.docker.internal`.
+Notes: `apiKey` is a placeholder for keyless local servers. `host.docker.internal` reaches the host's
+LM Studio (via LM Link); the desktop is also reachable directly at `http://192.168.1.158:1234/v1`.
 
 ### 6.2 `mcp.json` (pi-mcp-extension shape)
 

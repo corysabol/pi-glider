@@ -106,7 +106,7 @@ docker run --rm -v ~/.config/pi-glider:/root/.pi/agent --entrypoint bash pi-glid
   -c 'pi --list-models'
 ```
 
-Expect a table with your providers and models (e.g. `lan-inference` / `lm-studio`).
+Expect a table with your providers and models (e.g. `lmstudio` / `qwen/qwen3.8-27b`).
 
 ### C2. Extension is registered
 
