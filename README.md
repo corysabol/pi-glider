@@ -47,10 +47,14 @@ skills/        source-of-truth skills (core/, recon/, testing/, tools/, mcp/, wo
 container/     Dockerfile, docker-compose.yml, entrypoint, pdtm tool list
 templates/     engagement templates (RoE.md, .gitignore)
 scripts/       install.sh (seed config) + pi-glider.sh (launch wrapper)
-docs/          architecture, skill-authoring, engagement-workflow
+docs/          architecture, skill-authoring, engagement-workflow, smoke-test
 ```
 
 ## Skills
 
 Skills follow the [Agent Skills standard](https://agentskills.io/specification) and are
 portable across Pi, Claude Code, and Bionic. See [`docs/skill-authoring.md`](docs/skill-authoring.md).
+
+Categories: `core/` (operating manual, authoring, engagement setup), `recon/` (subdomain, DNS,
+port, HTTP, fingerprint, JS, cloud, CIDR), `testing/` (nuclei), `tools/` (per-tool reference),
+`mcp/` (Burp), and `workflows/` (external recon sweep).
