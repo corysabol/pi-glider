@@ -1,6 +1,7 @@
 ---
 name: tools-nuclei
-description: Reference for nuclei: template-based vulnerability scanning.
+description: |-
+  Reference for nuclei: template-based vulnerability scanning.
 ---
 
 # nuclei

@@ -1,6 +1,7 @@
 ---
 name: tools-tlsx
-description: Reference for tlsx: TLS fingerprinting and certificate inspection.
+description: |-
+  Reference for tlsx: TLS fingerprinting and certificate inspection.
 ---
 
 # tlsx

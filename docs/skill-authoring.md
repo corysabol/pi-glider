@@ -40,6 +40,15 @@ description: Enumerate subdomains for in-scope targets using subfinder and uncov
   load the skill. Keep it ≤ ~150 chars, written for someone with no project context. State the
   *purpose* and *when to use it*, not the implementation.
 
+> **Colons in descriptions**: Pi's YAML parser treats an unquoted `: ` (colon + space) as a nested
+> mapping, which breaks skill loading. If a description contains a colon, use the `|-` block scalar
+> (strip) so the colon is preserved without a trailing newline:
+>
+> ```yaml
+> description: |-
+>   Reference for naabu: fast port scanning.
+> ```
+
 ## Progressive disclosure
 
 `SKILL.md` is the entry point and should be self-contained for the common case. Put long

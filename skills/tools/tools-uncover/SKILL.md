@@ -1,6 +1,7 @@
 ---
 name: tools-uncover
-description: Reference for uncover: query search engines/APIs for hosts and subdomains.
+description: |-
+  Reference for uncover: query search engines/APIs for hosts and subdomains.
 ---
 
 # uncover

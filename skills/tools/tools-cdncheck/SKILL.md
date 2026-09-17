@@ -1,6 +1,7 @@
 ---
 name: tools-cdncheck
-description: Reference for cdncheck: detect CDN/WAF/cloud providers behind hosts.
+description: |-
+  Reference for cdncheck: detect CDN/WAF/cloud providers behind hosts.
 ---
 
 # cdncheck

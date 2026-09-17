@@ -1,6 +1,7 @@
 ---
 name: tools-dnsx
-description: Reference for dnsx: fast DNS resolution and record enumeration.
+description: |-
+  Reference for dnsx: fast DNS resolution and record enumeration.
 ---
 
 # dnsx

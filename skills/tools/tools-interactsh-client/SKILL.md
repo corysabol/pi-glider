@@ -1,6 +1,7 @@
 ---
 name: tools-interactsh-client
-description: Reference for interactsh-client: OOB interaction testing (DNS/HTTP callbacks).
+description: |-
+  Reference for interactsh-client: OOB interaction testing (DNS/HTTP callbacks).
 ---
 
 # interactsh-client

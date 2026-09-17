@@ -1,6 +1,7 @@
 ---
 name: tools-subfinder
-description: Reference for subfinder: passive subdomain enumeration from many sources.
+description: |-
+  Reference for subfinder: passive subdomain enumeration from many sources.
 ---
 
 # subfinder

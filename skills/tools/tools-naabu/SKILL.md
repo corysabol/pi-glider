@@ -1,6 +1,7 @@
 ---
 name: tools-naabu
-description: Reference for naabu: fast port scanning.
+description: |-
+  Reference for naabu: fast port scanning.
 ---
 
 # naabu

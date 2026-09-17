@@ -1,6 +1,7 @@
 ---
 name: tools-mapcidr
-description: Reference for mapcidr: expand, filter, and manipulate CIDR ranges.
+description: |-
+  Reference for mapcidr: expand, filter, and manipulate CIDR ranges.
 ---
 
 # mapcidr

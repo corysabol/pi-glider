@@ -1,6 +1,7 @@
 ---
 name: tools-asnmap
-description: Reference for asnmap: map IPs/domains to ASN and organization.
+description: |-
+  Reference for asnmap: map IPs/domains to ASN and organization.
 ---
 
 # asnmap

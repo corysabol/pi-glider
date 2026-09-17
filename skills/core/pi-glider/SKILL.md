@@ -1,6 +1,7 @@
 ---
 name: pi-glider
-description: Operating manual for the pi-glider pentest agent: RoE.md is the source of truth, scope enforcement, evidence handling, and safety rules.
+description: |-
+  Operating manual for the pi-glider pentest agent: RoE.md is the source of truth, scope enforcement, evidence handling, and safety rules.
 ---
 
 # pi-glider operating manual

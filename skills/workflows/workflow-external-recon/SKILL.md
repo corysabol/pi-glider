@@ -1,6 +1,7 @@
 ---
 name: workflow-external-recon
-description: Full external recon sweep: subdomain, DNS, port, HTTP, fingerprint, and crawl for in-scope targets.
+description: |-
+  Full external recon sweep: subdomain, DNS, port, HTTP, fingerprint, and crawl for in-scope targets.
 ---
 
 # External recon sweep

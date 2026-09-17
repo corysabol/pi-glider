@@ -1,6 +1,7 @@
 ---
 name: tools-httpx
-description: Reference for httpx: HTTP probing, tech detection, and fingerprinting.
+description: |-
+  Reference for httpx: HTTP probing, tech detection, and fingerprinting.
 ---
 
 # httpx

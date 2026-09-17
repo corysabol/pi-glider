@@ -1,6 +1,7 @@
 ---
 name: tools-katana
-description: Reference for katana: web crawling and endpoint/JS discovery.
+description: |-
+  Reference for katana: web crawling and endpoint/JS discovery.
 ---
 
 # katana

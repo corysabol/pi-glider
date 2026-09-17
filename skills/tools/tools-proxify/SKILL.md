@@ -1,6 +1,7 @@
 ---
 name: tools-proxify
-description: Reference for proxify: route tool traffic through a proxy (e.g. Burp).
+description: |-
+  Reference for proxify: route tool traffic through a proxy (e.g. Burp).
 ---
 
 # proxify

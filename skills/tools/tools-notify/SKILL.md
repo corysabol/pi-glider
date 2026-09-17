@@ -1,6 +1,7 @@
 ---
 name: tools-notify
-description: Reference for notify: send notifications (Slack, Discord, etc.) from tool output.
+description: |-
+  Reference for notify: send notifications (Slack, Discord, etc.) from tool output.
 ---
 
 # notify
