@@ -91,10 +91,21 @@ See [`docs/smoke-test.md`](docs/smoke-test.md) Part E for validation steps.
 ## Startup banner
 
 `extensions/pi-glider-banner/` is a small Pi extension that replaces the built-in `pi vX.Y.Z`
-startup header with an animated Conway's Game of Life **glider** (the old-school hacker symbol the
-project is named after). It evolves for a short intro, then settles on a static frame.
+startup header with a Conway's Game of Life **glider** (the old-school hacker symbol the project is
+named after) rendered in Unicode full blocks, beside a `pi-glider vX.Y.Z` label:
+
+```
+·█·
+··█  pi-glider v0.74.2
+███
+```
 
 `scripts/install.sh` copies it into `~/.config/pi-glider/extensions/`, where Pi auto-loads it. To
 disable it, delete `~/.config/pi-glider/extensions/pi-glider-banner/` (or remove it from the repo
-before running `install.sh`). Tweak the animation in `extensions/pi-glider-banner/index.ts`
-(`TICK_MS`, `MAX_GENERATIONS`, `COLS`/`ROWS`, `ALIVE`/`DEAD` glyphs).
+before running `install.sh`).
+
+The glider is static by default. An animated variant (the glider looping across the grid via
+toroidal wrap-around) is implemented but disabled, because each frame forces a full TUI re-render
+that snaps the terminal scroll to the header. Set `ANIMATE = true` in
+`extensions/pi-glider-banner/index.ts` to re-enable it (`TICK_MS`, `COLS`/`ROWS`, `ALIVE`/`DEAD`
+glyphs are also tweakable there).

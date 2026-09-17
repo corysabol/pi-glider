@@ -1,24 +1,29 @@
 /**
  * pi-glider-banner — custom startup header for the pi-glider agent.
  *
- * Replaces Pi's built-in "pi vX.Y.Z" header with an animated Conway's Game of
- * Life "glider" (the old-school hacker symbol the project is named after).
+ * Replaces Pi's built-in "pi vX.Y.Z" header with a Conway's Game of Life
+ * "glider" (the old-school hacker symbol the project is named after) rendered
+ * in Unicode full blocks, beside a "pi-glider vX.Y.Z" label.
  *
- * The glider evolves across a small grid for a short intro, then settles on a
- * static frame. The interval is cleared on dispose so nothing leaks on
- * session switch / exit.
+ * The glider is shown statically by default. Animating it (the glider looping
+ * across the grid via toroidal wrap-around) is supported but disabled: each
+ * animation frame triggers a full TUI re-render, which snaps the terminal
+ * scroll to the header. Set ANIMATE = true to re-enable the loop.
  */
 
 import type { ExtensionAPI, Theme } from "@earendil-works/pi-coding-agent";
+import { VERSION } from "@earendil-works/pi-coding-agent";
 
-// ─── Game of Life ────────────────────────────────────────────────────────────
+// ─── Game of Life (toroidal wrap-around) ─────────────────────────────────────
 
 const COLS = 28;
 const ROWS = 7;
-const ALIVE = "O";
-const DEAD = ".";
+const ALIVE = "█";
+const DEAD = "·";
 const TICK_MS = 100;
-const MAX_GENERATIONS = 30;
+
+/** Animate the glider looping across the grid at startup. See header note. */
+const ANIMATE = false;
 
 /** Build a fresh grid with the classic 3x3 glider placed at the top-left. */
 function makeGrid(): number[][] {
@@ -31,7 +36,7 @@ function makeGrid(): number[][] {
   return g;
 }
 
-/** Advance one Conway's Game of Life generation (standard B3/S23 rules). */
+/** Advance one generation (B3/S23) with wrap-around boundaries so the glider loops. */
 function step(g: number[][]): number[][] {
   const next = Array.from({ length: ROWS }, () => new Array<number>(COLS).fill(0));
   for (let r = 0; r < ROWS; r++) {
@@ -40,9 +45,9 @@ function step(g: number[][]): number[][] {
       for (let dr = -1; dr <= 1; dr++) {
         for (let dc = -1; dc <= 1; dc++) {
           if (dr === 0 && dc === 0) continue;
-          const rr = r + dr;
-          const cc = c + dc;
-          if (rr >= 0 && rr < ROWS && cc >= 0 && cc < COLS) n += g[rr][cc];
+          const rr = (r + dr + ROWS) % ROWS;
+          const cc = (c + dc + COLS) % COLS;
+          n += g[rr][cc];
         }
       }
       next[r][c] = g[r][c] ? (n === 2 || n === 3 ? 1 : 0) : n === 3 ? 1 : 0;
@@ -51,47 +56,60 @@ function step(g: number[][]): number[][] {
   return next;
 }
 
-/** Render a grid to colored ASCII lines (alive = accent, dead = muted). */
+/** Render a grid to colored Unicode-block lines (alive = accent, dead = muted). */
 function renderLines(g: number[][], theme: Theme): string[] {
   return g.map((row) =>
     row.map((cell) => (cell ? theme.fg("accent", ALIVE) : theme.fg("muted", DEAD))).join(""),
   );
 }
 
+// ─── Static glider ───────────────────────────────────────────────────────────
+
+const GLIDER = ["·█·", "··█", "███"];
+
+function renderStatic(theme: Theme): string[] {
+  const lines = GLIDER.map((row) =>
+    row
+      .split("")
+      .map((c) => (c === "█" ? theme.fg("accent", ALIVE) : theme.fg("muted", DEAD)))
+      .join(""),
+  );
+  // Put the label beside the glider's middle row.
+  lines[1] += `  ${theme.bold("pi-glider")}${theme.fg("dim", ` v${VERSION}`)}`;
+  return lines;
+}
+
 // ─── Extension ───────────────────────────────────────────────────────────────
 
 export default function (pi: ExtensionAPI): void {
-  // The UI context (with setHeader) is only available on event handlers, not on
-  // the ExtensionAPI passed to the factory. Register on session_start, which
-  // fires once the interactive TUI is up.
   pi.on("session_start", (_event, ctx) => {
     if (!ctx.hasUI) return; // skip in print/RPC (non-interactive) modes
 
     ctx.ui.setHeader((tui, theme) => {
-      let grid = makeGrid();
-      let generation = 0;
+      if (ANIMATE) {
+        let grid = makeGrid();
+        const component = {
+          render(_width: number): string[] {
+            return renderLines(grid, theme);
+          },
+          invalidate(): void {},
+        };
+        const timer = setInterval(() => {
+          grid = step(grid);
+          tui.requestRender();
+        }, TICK_MS);
+        (component as typeof component & { dispose?: () => void }).dispose = () =>
+          clearInterval(timer);
+        return component;
+      }
 
-      const component = {
+      const lines = renderStatic(theme);
+      return {
         render(_width: number): string[] {
-          return renderLines(grid, theme);
+          return lines;
         },
         invalidate(): void {},
       };
-
-      const timer = setInterval(() => {
-        grid = step(grid);
-        generation += 1;
-        tui.requestRender();
-        if (generation >= MAX_GENERATIONS) {
-          clearInterval(timer);
-        }
-      }, TICK_MS);
-
-      // Clean up the interval when the header is replaced or the session ends.
-      (component as typeof component & { dispose?: () => void }).dispose = () =>
-        clearInterval(timer);
-
-      return component;
     });
   });
 }
