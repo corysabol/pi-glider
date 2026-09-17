@@ -46,6 +46,7 @@ The container mounts:
 ```
 config/        canonical agentDir templates (models.json, mcp.json, settings.json)
 skills/        source-of-truth skills (core/, recon/, testing/, tools/, mcp/, workflows/)
+extensions/    Pi extensions (pi-glider-banner: animated Game of Life glider header)
 container/     Dockerfile, docker-compose.yml, entrypoint, pdtm tool list
 templates/     engagement templates (RoE.md, .gitignore)
 scripts/       install.sh (seed config) + pi-glider.sh (launch wrapper) + burp-mcp-bridge.py (Host-rewriting proxy)
@@ -86,3 +87,14 @@ Environment: `BRIDGE_LISTEN_HOST`/`BRIDGE_LISTEN_PORT` (default `0.0.0.0`/`9877`
 use `--network=host` and point `mcp.json` directly at `http://127.0.0.1:9876` (no bridge needed).
 
 See [`docs/smoke-test.md`](docs/smoke-test.md) Part E for validation steps.
+
+## Startup banner
+
+`extensions/pi-glider-banner/` is a small Pi extension that replaces the built-in `pi vX.Y.Z`
+startup header with an animated Conway's Game of Life **glider** (the old-school hacker symbol the
+project is named after). It evolves for a short intro, then settles on a static frame.
+
+`scripts/install.sh` copies it into `~/.config/pi-glider/extensions/`, where Pi auto-loads it. To
+disable it, delete `~/.config/pi-glider/extensions/pi-glider-banner/` (or remove it from the repo
+before running `install.sh`). Tweak the animation in `extensions/pi-glider-banner/index.ts`
+(`TICK_MS`, `MAX_GENERATIONS`, `COLS`/`ROWS`, `ALIVE`/`DEAD` glyphs).

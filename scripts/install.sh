@@ -28,4 +28,8 @@ done
 cp -R "$REPO_ROOT/skills/." "$TARGET/skills/"
 echo "  sync  skills/"
 
+# Extensions (copy repo extensions over same-named; preserve operator-added extensions)
+cp -R "$REPO_ROOT/extensions/." "$TARGET/extensions/"
+echo "  sync  extensions/"
+
 echo "[pi-glider] done. Edit $TARGET/models.json and $TARGET/mcp.json before first run."
