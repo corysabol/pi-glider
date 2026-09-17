@@ -19,7 +19,7 @@ import { VERSION } from "@earendil-works/pi-coding-agent";
 const COLS = 28;
 const ROWS = 7;
 const ALIVE = "█";
-const DEAD = "·";
+const DEAD = "░"; // light shade — subtle background block for dead cells
 const TICK_MS = 100;
 
 /** Animate the glider looping across the grid at startup. See header note. */
@@ -65,27 +65,32 @@ function renderLines(g: number[][], theme: Theme): string[] {
 
 // ─── Static glider ───────────────────────────────────────────────────────────
 
-const GLIDER_PATTERN = ["·█·", "··█", "███"];
-const SCALE = 2; // each cell becomes SCALE × SCALE blocks
+const GLIDER_PATTERN = ["░█░", "░░█", "███"];
 
-/** Scale a cell pattern up so each cell is a uniform SCALE×SCALE block. */
-function scalePattern(pattern: string[], scale: number): string[] {
+// Terminal cells are ~2:1 (taller than wide), so use twice as many horizontal
+// characters as vertical to make each cell render as a square rather than a
+// column. CELL_W = 2 × CELL_H.
+const CELL_W = 4; // horizontal characters per cell
+const CELL_H = 2; // vertical characters per cell
+
+/** Scale a cell pattern up so each cell is a uniform CELL_W×CELL_H block. */
+function scalePattern(pattern: string[], cellW: number, cellH: number): string[] {
   const lines: string[] = [];
   for (const row of pattern) {
     const scaledRow = row
       .split("")
-      .map((c) => c.repeat(scale))
+      .map((c) => c.repeat(cellW))
       .join("");
-    for (let i = 0; i < scale; i++) lines.push(scaledRow);
+    for (let i = 0; i < cellH; i++) lines.push(scaledRow);
   }
   return lines;
 }
 
 function renderStatic(theme: Theme): string[] {
-  const lines = scalePattern(GLIDER_PATTERN, SCALE).map((row) =>
+  const lines = scalePattern(GLIDER_PATTERN, CELL_W, CELL_H).map((row) =>
     row
       .split("")
-      .map((c) => (c === "█" ? theme.fg("accent", ALIVE) : theme.fg("muted", DEAD)))
+      .map((c) => (c === ALIVE ? theme.fg("accent", ALIVE) : theme.fg("muted", DEAD)))
       .join(""),
   );
   // Put the label beside the glider's middle row.

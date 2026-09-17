@@ -92,15 +92,16 @@ See [`docs/smoke-test.md`](docs/smoke-test.md) Part E for validation steps.
 
 `extensions/pi-glider-banner/` is a small Pi extension that replaces the built-in `pi vX.Y.Z`
 startup header with a Conway's Game of Life **glider** (the old-school hacker symbol the project is
-named after) rendered in Unicode full blocks, beside a `pi-glider vX.Y.Z` label:
+named after) rendered in Unicode full blocks (alive) and light-shade blocks (dead), beside a
+`pi-glider vX.Y.Z` label:
 
 ```
-··██··
-··██··
-····██  pi-glider v0.74.2
-····██
-██████
-██████
+░░░░████░░░░
+░░░░████░░░░
+░░░░░░░░████  pi-glider v0.74.2
+░░░░░░░░████
+████████████
+████████████
 ```
 
 `scripts/install.sh` copies it into `~/.config/pi-glider/extensions/`, where Pi auto-loads it. To
@@ -110,5 +111,6 @@ before running `install.sh`).
 The glider is static by default. An animated variant (the glider looping across the grid via
 toroidal wrap-around) is implemented but disabled, because each frame forces a full TUI re-render
 that snaps the terminal scroll to the header. Set `ANIMATE = true` in
-`extensions/pi-glider-banner/index.ts` to re-enable it. Other knobs there: `SCALE` (cell size,
-default 2), `TICK_MS`, `COLS`/`ROWS`, and the `ALIVE`/`DEAD` glyphs.
+`extensions/pi-glider-banner/index.ts` to re-enable it. Other knobs there: `CELL_W`/`CELL_H`
+(cell size in characters, default 4×2 — kept 2:1 so cells render square, since terminal cells are
+~twice as tall as wide), `TICK_MS`, `COLS`/`ROWS`, and the `ALIVE`/`DEAD` glyphs.
