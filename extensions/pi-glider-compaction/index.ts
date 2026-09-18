@@ -20,6 +20,7 @@ export default function (pi: ExtensionAPI): void {
     try {
       skill = fs.readFileSync(SKILL_PATH, "utf-8");
     } catch {
+      ctx.ui.setStatus("pi-glider-reinject", "pi-glider: operating manual missing — not re-injected");
       return; // skill missing — nothing to re-inject
     }
 
@@ -32,6 +33,8 @@ export default function (pi: ExtensionAPI): void {
       { deliverAs: "steer" },
     );
 
-    ctx.ui.notify("Re-injected pi-glider operating manual after compaction", "info");
+    // setStatus writes to the footer status bar, which survives compaction_end's transcript
+    // rebuild. (notify would render a dim line in the transcript that compaction_end wipes.)
+    ctx.ui.setStatus("pi-glider-reinject", "pi-glider: re-injected operating manual after compaction");
   });
 }
