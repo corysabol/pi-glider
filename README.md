@@ -44,9 +44,9 @@ The container mounts:
 ## Layout
 
 ```
-config/        canonical agentDir templates (models.json, mcp.json, settings.json)
+config/        canonical agentDir templates (models.json, mcp.json, settings.json, APPEND_SYSTEM.md)
 skills/        source-of-truth skills (core/, recon/, testing/, tools/, mcp/, workflows/)
-extensions/    Pi extensions (pi-glider-banner: animated Game of Life glider header)
+extensions/    Pi extensions (pi-glider-banner: glider header; pi-glider-compaction: re-inject manual after compaction)
 container/     Dockerfile, docker-compose.yml, entrypoint, pdtm tool list
 templates/     engagement templates (RoE.md, .gitignore)
 scripts/       install.sh (seed config) + pi-glider.sh (launch wrapper) + burp-mcp-bridge.py (Host-rewriting proxy)
@@ -110,6 +110,21 @@ Confirmed findings are written to `evidence/` using the finding template
 
 See [`docs/engagement-workflow.md`](docs/engagement-workflow.md) and
 `skills/core/pi-glider/SKILL.md` for the full methodology.
+
+## System prompt & compaction
+
+Two mechanisms keep the agent aligned with the pi-glider methodology even as context grows and is
+compacted:
+
+- **`config/APPEND_SYSTEM.md`** — a minimal, purpose-aligned system prompt appended to Pi's default
+  prompt and injected every turn (so it survives compaction). It restates the core invariants (RoE
+  is source of truth, methodology, breadth over depth) and points at the `pi-glider` skill.
+- **`extensions/pi-glider-compaction/`** — a small extension that, on every `session_compact`,
+  deterministically re-injects the full `pi-glider` skill body as a hidden message so the
+  methodology is fresh again after the model's earlier read of it is summarized away.
+
+`scripts/install.sh` seeds both into the agentDir. See [`docs/system-prompt.md`](docs/system-prompt.md)
+for the rationale and the `SYSTEM.md` (full replacement) alternative.
 
 ## Burp MCP bridge
 
