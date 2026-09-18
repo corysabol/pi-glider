@@ -62,6 +62,52 @@ Categories: `core/` (operating manual, authoring, engagement setup), `recon/` (s
 port, HTTP, fingerprint, JS, cloud, CIDR), `testing/` (nuclei), `tools/` (per-tool reference),
 `mcp/` (Burp), and `workflows/` (external recon sweep).
 
+## Operating the agent
+
+Pi is deliberately minimal and expects the operator to drive it. There are two ways to work with
+the agent; match your intent.
+
+### Two modes
+
+**Directed instruction** — a specific, bounded step. The agent does exactly that and awaits the
+next step:
+
+```
+/skill:pi-glider extract evidence/app.apk and decompile it with jadx, then await next steps
+```
+
+**Open-ended task** — a goal. The agent runs the full methodology (recon → plan → confirm → test →
+document) and stops at the plan gate for your sign-off:
+
+```
+/skill:pi-glider scan the in-scope targets, run recon, then present a plan before testing
+```
+
+### Loading skills
+
+`/skill:<name>` loads a skill's content into context. Everything after the skill name is treated as
+the prompt:
+
+- `/skill:pi-glider` — loads the methodology only; it does **not** start work. The agent waits for
+  your actual instruction.
+- `/skill:pi-glider <prompt>` — loads the methodology **and** runs `<prompt>` in the same turn.
+
+Prefer attaching the task to the `/skill:` command rather than loading and then prompting
+separately — it removes any ambiguity about whether to act.
+
+### Plan-and-confirm gate
+
+On open-ended tasks the agent does not jump straight to exploitation. It reads `RoE.md`, maps the
+attack surface, then writes a prioritized plan to `notes/plan.md` and presents it for your
+confirmation (or tweaks) before any active testing. Review it, then say "proceed" (or scope it
+down, e.g. "run items 1–3, skip 4").
+
+Confirmed findings are written to `evidence/` using the finding template
+(`templates/engagement/finding.md`) with reproduction steps so you can validate them.
+
+See [`docs/engagement-workflow.md`](docs/engagement-workflow.md) and
+`skills/core/pi-glider/SKILL.md` for the full methodology.
+
 ## Burp MCP bridge
 
 Burp Suite's MCP server rejects any request whose `Host`/`Origin`/`Referer` header isn't
