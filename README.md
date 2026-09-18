@@ -102,6 +102,9 @@ attack surface, then writes a prioritized plan to `notes/plan.md` and presents i
 confirmation (or tweaks) before any active testing. Review it, then say "proceed" (or scope it
 down, e.g. "run items 1–3, skip 4").
 
+During testing the agent works breadth-first: it confirms each finding (reproduce once + evidence),
+writes it, and moves on — it does not deep-dive or over-exploit. Depth is operator-requested.
+
 Confirmed findings are written to `evidence/` using the finding template
 (`templates/engagement/finding.md`) with reproduction steps so you can validate them.
 

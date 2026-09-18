@@ -60,13 +60,22 @@ juice shop", "test this app", "find vulnerabilities in X" — follow the phased 
 #### Phase 3 — Test / exploit (only after confirmation)
 
 - Execute the confirmed plan. Prefer non-intrusive techniques first.
-- Confirm each finding by reproducing it and capturing evidence before reporting it.
+- Work **breadth-first**: find and document as many distinct findings as possible, not fully
+  exploit any single one. Pentests are time-bounded — prioritize high-quality breadth and fast
+  confirmation over depth.
+- A finding is **confirmed** when you have reproduced it once and captured evidence (a command +
+  output that demonstrates it). That is the stop line — do not escalate, chain, or fully exploit
+  beyond it.
+- Depth (full exploitation, chaining, impact assessment) is a separate, operator-requested
+  activity. If the operator wants it, they will ask.
 
 #### Phase 4 — Document findings
 
-- As soon as a finding is confirmed, write it out in full using the finding format below and save
-  it to `/engagement/evidence/`. The operator must be able to independently reproduce and validate
-  every finding.
+- As soon as a finding is confirmed, STOP testing it, write it out in full using the finding format
+  below, and move to the next plan item.
+- If you cannot confirm an item after a reasonable effort, mark it `unconfirmed` and move on — do
+  not rabbit-hole.
+- The operator must be able to independently reproduce and validate every finding.
 
 ## Finding format
 
@@ -84,22 +93,20 @@ Write every confirmed finding as `evidence/<id>-<slug>.md`:
 <1–2 sentences on what the issue is and its impact.>
 
 ## Reproduction steps
-1. ...
-2. ...
-3. ...
+<the minimal steps to reproduce.>
 
 ## Evidence
-<commands run, request/response excerpts, screenshots, tool output.>
+<the command + output that confirms it.>
 
 ## Impact
-<what an attacker could do.>
+<one sentence on the direct impact — not a full attack chain.>
 
 ## Remediation
 <suggested fix.>
 ```
 
-Confirm before writing: reproduce the finding and capture evidence. Do not report speculation as a
-confirmed finding.
+Confirm before writing: reproduce the finding once and capture evidence. Do not report speculation
+as a confirmed finding. Stop at confirmation — do not over-exploit.
 
 ## Scope enforcement
 

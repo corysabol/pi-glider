@@ -13,17 +13,15 @@
 
 ## Reproduction steps
 
-1.
-2.
-3.
+<the minimal steps to reproduce.>
 
 ## Evidence
 
-<commands run, request/response excerpts, screenshots, tool output.>
+<the command + output that confirms it.>
 
 ## Impact
 
-<what an attacker could do.>
+<one sentence on the direct impact — not a full attack chain.>
 
 ## Remediation
 
