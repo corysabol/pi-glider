@@ -121,10 +121,24 @@ compacted:
   is source of truth, methodology, breadth over depth) and points at the `pi-glider` skill.
 - **`extensions/pi-glider-compaction/`** — a small extension that, on every `session_compact`,
   deterministically re-injects the full `pi-glider` skill body as a hidden message so the
-  methodology is fresh again after the model's earlier read of it is summarized away.
+  methodology is fresh again after the model's earlier read of it is summarized away. It also
+  writes a confirmation to the **footer status bar** (`pi-glider: re-injected operating manual
+  after compaction`) so the operator can see it ran.
 
 `scripts/install.sh` seeds both into the agentDir. See [`docs/system-prompt.md`](docs/system-prompt.md)
 for the rationale and the `SYSTEM.md` (full replacement) alternative.
+
+### Debugging extensions
+
+- Extensions auto-load from `<agentDir>/extensions/*/index.ts` at startup and on `/reload`; the
+  startup "Extensions" list confirms what loaded.
+- `ctx.ui.setStatus(key, text)` writes to the **footer status bar** — persistent and visible. This
+  is the reliable way to surface state.
+- `ctx.ui.notify(msg, type)` renders a dim line *inside the transcript*, which compaction's
+  transcript rebuild wipes — so it is not reliable around `session_compact`.
+- `console.log` / `console.error` in an extension go to the process stdout/stderr, which the TUI
+  hides. To see them, run non-interactively (`pi --print "..."` or `--mode text`) or redirect
+  stderr to a file (`pi 2>/tmp/pi-ext.log`).
 
 ## Burp MCP bridge
 
