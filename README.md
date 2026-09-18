@@ -111,21 +111,25 @@ Confirmed findings are written to `evidence/` using the finding template
 See [`docs/engagement-workflow.md`](docs/engagement-workflow.md) and
 `skills/core/pi-glider/SKILL.md` for the full methodology.
 
-## System prompt & compaction
+## System prompt, tips & compaction
 
-Two mechanisms keep the agent aligned with the pi-glider methodology even as context grows and is
+Three layers keep the agent aligned with the pi-glider methodology even as context grows and is
 compacted:
 
 - **`config/APPEND_SYSTEM.md`** — a minimal, purpose-aligned system prompt appended to Pi's default
   prompt and injected every turn (so it survives compaction). It restates the core invariants (RoE
-  is source of truth, methodology, breadth over depth) and points at the `pi-glider` skill.
-- **`extensions/pi-glider-compaction/`** — a small extension that, on every `session_compact`,
-  deterministically re-injects the full `pi-glider` skill body as a hidden message so the
-  methodology is fresh again after the model's earlier read of it is summarized away. It also
-  writes a confirmation to the **footer status bar** (`pi-glider: re-injected operating manual
-  after compaction`) so the operator can see it ran.
+  is source of truth, methodology, breadth over depth) and points at the `pi-glider` skill and the
+  tips file.
+- **`config/methodology-tips.md`** — operator-editable general testing heuristics (e.g. map the
+  real API surface, not just client routes). Seeded once by `install.sh` (never clobbered unless
+  `--force`), so the operator owns it.
+- **`extensions/pi-glider-compaction/`** — a small extension that injects the tips at
+  `session_start`, and on every `session_compact` re-injects both the full `pi-glider` skill body
+  and the tips as hidden messages so the methodology stays fresh. It also writes a confirmation to
+  the **footer status bar** (`pi-glider: re-injected operating manual + tips after compaction`) so
+  the operator can see it ran.
 
-`scripts/install.sh` seeds both into the agentDir. See [`docs/system-prompt.md`](docs/system-prompt.md)
+`scripts/install.sh` seeds all three into the agentDir. See [`docs/system-prompt.md`](docs/system-prompt.md)
 for the rationale and the `SYSTEM.md` (full replacement) alternative.
 
 ### Debugging extensions

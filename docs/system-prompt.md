@@ -5,13 +5,16 @@ Status: implemented (approach 1 — append + full-body re-injection). See follow
 ## Goal
 
 Keep the agent aligned with the pi-glider methodology even as context grows and is auto-compacted.
-Two mechanisms work together:
+Three layers work together:
 
 1. **`config/APPEND_SYSTEM.md`** — a minimal, purpose-aligned system prompt appended to Pi's default
    prompt and injected every turn (so it survives compaction).
-2. **`extensions/pi-glider-compaction/`** — a small extension that re-injects the full `pi-glider`
-   skill body after every `session_compact`, so the methodology is fresh again after the model's
-   earlier read of it is summarized away.
+2. **`config/methodology-tips.md`** — operator-editable general testing heuristics (seeded once,
+   never clobbered unless `--force`).
+3. **`extensions/pi-glider-compaction/`** — a small extension that injects the tips at
+   `session_start`, and re-injects the full `pi-glider` skill body **and** the tips after every
+   `session_compact`, so the methodology is fresh again after the model's earlier read of it is
+   summarized away.
 
 ## Mechanism (from Pi source)
 
@@ -38,17 +41,27 @@ You are pi-glider, a penetration-testing agent running in a Kali Linux container
 - Breadth over depth: confirm a finding (reproduce once + evidence), write it, then move on. Depth
   is operator-requested.
 - Write confirmed findings to `/engagement/evidence/` with reproduction steps.
+- prefer using existing tools where possible.
+- leverage the various installed skills when relevant.
+- Follow the general testing heuristics in `methodology-tips.md` (operator-editable).
 ```
 
-## Compaction re-injection
+## Injection
 
-`extensions/pi-glider-compaction/index.ts` listens to `session_compact` and calls
-`pi.sendMessage({ customType: "pi-glider-reinject", content, display: false }, { deliverAs: "steer" })`
-with the full `skills/core/pi-glider/SKILL.md` body. Custom messages are converted to `user` role in
-LLM context (`convertToLlm`), so the content is injected without triggering a spurious turn; the
-`display: false` keeps it out of the transcript (a `ctx.ui.notify` signals it happened).
+`extensions/pi-glider-compaction/index.ts` has two handlers:
 
-`scripts/install.sh` seeds `APPEND_SYSTEM.md` (and `SYSTEM.md`, if present) into the agentDir.
+- `session_start` — injects `methodology-tips.md` once, so the tips are in context from the first
+  turn.
+- `session_compact` — re-injects both `skills/core/pi-glider/SKILL.md` and `methodology-tips.md`.
+
+Both call `pi.sendMessage({ customType, content, display: false }, { deliverAs: "steer" })`. Custom
+messages are converted to `user` role in LLM context (`convertToLlm`), so the content is injected
+without triggering a spurious turn; `display: false` keeps it out of the transcript. A
+`ctx.ui.setStatus(...)` writes a confirmation to the footer status bar (which survives
+compaction's transcript rebuild, unlike `notify`).
+
+`scripts/install.sh` seeds `APPEND_SYSTEM.md`, `methodology-tips.md` (and `SYSTEM.md`, if present)
+into the agentDir.
 
 ## Follow-ups
 
