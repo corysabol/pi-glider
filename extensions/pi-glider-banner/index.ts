@@ -8,7 +8,9 @@
  *
  * The glider animates in place for a short time at startup — it cycles through
  * its four Game-of-Life phases (so the shape subtly morphs) and then freezes on
- * the canonical glider. Set ANIMATE = false to render it fully static.
+ * the canonical glider. Startup output is held until the animation finishes so
+ * the per-frame re-renders don't hijack the terminal scroll. Set ANIMATE = false
+ * to render it fully static.
  */
 
 import type { ExtensionAPI, Theme } from "@earendil-works/pi-coding-agent";
@@ -106,7 +108,7 @@ const TICK_MS = 150;
 // ─── Extension ───────────────────────────────────────────────────────────────
 
 export default function (pi: ExtensionAPI): void {
-  pi.on("session_start", (_event, ctx) => {
+  pi.on("session_start", async (_event, ctx) => {
     if (!ctx.hasUI) return; // skip in print/RPC (non-interactive) modes
 
     ctx.ui.setHeader((tui, theme) => {
@@ -140,5 +142,16 @@ export default function (pi: ExtensionAPI): void {
         invalidate(): void {},
       };
     });
+
+    // Hold the rest of startup (skills/model/prompt body) until the animation
+    // finishes. session_start handlers are awaited, and Pi renders the body only
+    // after they return, so awaiting here delays the body. The per-frame
+    // re-renders would otherwise snap the terminal scroll to the header; by
+    // delaying the body until the glider freezes, there's nothing to scroll yet.
+    if (ANIMATE) {
+      await new Promise((resolve) =>
+        setTimeout(resolve, ANIMATE_FRAMES * TICK_MS + TICK_MS),
+      );
+    }
   });
 }

@@ -109,8 +109,10 @@ disable it, delete `~/.config/pi-glider/extensions/pi-glider-banner/` (or remove
 before running `install.sh`).
 
 The glider animates in place for a short time at startup: it cycles through its four Game-of-Life
-phases (a subtle morph) and then freezes on the canonical glider. Set `ANIMATE = false` in
-`extensions/pi-glider-banner/index.ts` to render it fully static. Other knobs there:
+phases (a subtle morph) and then freezes on the canonical glider. Startup output (skills/model/
+prompt) is held until the animation finishes, so the per-frame re-renders don't hijack the terminal
+scroll. Set `ANIMATE = false` in `extensions/pi-glider-banner/index.ts` to render it fully static.
+Other knobs there:
 `ANIMATE_FRAMES` (phase steps before freezing, default 8), `TICK_MS` (default 150),
 `CELL_W`/`CELL_H` (cell size in characters, default 4×2 — kept 2:1 so cells render square, since
 terminal cells are ~twice as tall as wide), and the `ALIVE`/`DEAD` glyphs.
