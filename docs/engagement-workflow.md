@@ -4,15 +4,18 @@
 
 1. **Create the engagement dir.** `mkdir -p ~/engagements/<name>/` and copy the RoE template:
    `cp templates/engagement/RoE.md ~/engagements/<name>/RoE.md`. Fill it in.
-2. **Launch the container**, mounting the engagement dir to `/engagement` and the agentDir to
-   `/root/.pi/agent` (plus the per-engagement `sessions/` dir).
+2. **Launch the agent** with the CLI, which seeds a per-engagement `.pi/` agentDir (from the global
+   `~/.config/pi-glider/`) and then runs Pi:
+   - Container (default): `scripts/pi-glider ~/engagements/<name>`
+   - Host: `scripts/pi-glider --no-container ~/engagements/<name>`
 3. **Connect.** The agent connects to the configured inference API (`models.json`) and any MCPs
    (`mcp.json`).
 4. **Operate.** Attach to the Pi session and request tasks / trigger skills. The agent follows a
    phased methodology (see below): orient → recon → plan → confirm → test → document.
 5. **Accumulate.** Working files (discovered IPs, hosts, recon output) and Pi session history
-   accumulate in `/engagement`; the agent aligns against `RoE.md` for scope.
-6. **Teardown.** Remove the container. Evidence + session history persist in the engagement dir.
+   accumulate in the engagement dir; the agent aligns against `RoE.md` for scope.
+6. **Teardown.** Remove the container (or exit the host session). Evidence + session history
+   persist in the engagement dir (session history under `.pi/sessions/`).
 
 ## Engagement directory layout
 
@@ -22,8 +25,16 @@
 ├── recon/          # recon output (subdomains, ports, probes, crawls)
 ├── evidence/       # screenshots, findings, artifacts
 ├── notes/          # working notes
-└── sessions/       # Pi session history (bind-mounted over /root/.pi/agent/sessions)
+└── .pi/            # per-engagement agentDir (seeded once from ~/.config/pi-glider/)
+    ├── models.json / mcp.json / settings.json
+    ├── APPEND_SYSTEM.md / methodology-tips.md / context-inject.json
+    ├── skills/  extensions/
+    └── sessions/   # Pi session history
 ```
+
+The `.pi/` agentDir is seeded once on first launch and never clobbered, so per-engagement tweaks to
+skills/config persist for that engagement. Copy changes back to `~/.config/pi-glider/` to reuse
+them on future engagements.
 
 ## Operating methodology
 

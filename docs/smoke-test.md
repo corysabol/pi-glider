@@ -33,7 +33,7 @@ Expect the layout from `README.md`: `config/`, `skills/{core,recon,testing,tools
 ### A3. Config JSON is valid
 
 ```bash
-for f in config/models.json config/mcp.json config/settings.json; do
+for f in config/models.json config/mcp.json config/settings.json config/context-inject.json; do
   python3 -c "import json;json.load(open('$f'))" && echo "OK  $f"
 done
 ```
@@ -51,21 +51,44 @@ done
 
 Every skill's `name` must equal its folder name and have a non-empty `description`.
 
-### A5. Seed the live agentDir
+### A5. Seed the global agentDir
 
 ```bash
-./scripts/install.sh
+./scripts/pi-glider install     # or: ./scripts/install.sh
 ls -la ~/.config/pi-glider/
 ```
 
-Expect `models.json`, `mcp.json`, `settings.json`, and a populated `skills/`. Re-run with `--force`
-to overwrite config files you've edited.
+Expect `models.json`, `mcp.json`, `settings.json`, `APPEND_SYSTEM.md`, `methodology-tips.md`,
+`context-inject.json`, and populated `skills/` and `extensions/`. Re-run with `--force` to
+overwrite config files you've edited.
 
 ### A6. Point config at your environment
 
 ```bash
 $EDITOR ~/.config/pi-glider/models.json   # set baseUrl to your inference endpoint
 $EDITOR ~/.config/pi-glider/mcp.json      # set the Burp MCP URL (see Part E)
+```
+
+### A7. Seed a per-engagement agentDir + install the CLI
+
+The CLI seeds `<engagement>/.pi/` from the global dir on first launch. To seed it manually (useful
+for the non-interactive checks in Parts C/D) — do this *after* A6 so your edits are included:
+
+```bash
+mkdir -p ~/engagements/acme && cp templates/engagement/RoE.md ~/engagements/acme/RoE.md
+cp -R ~/.config/pi-glider ~/engagements/acme/.pi
+mkdir -p ~/engagements/acme/.pi/sessions
+ls -la ~/engagements/acme/.pi/
+```
+
+Expect `.pi/` to contain `models.json`, `mcp.json`, `settings.json`, `APPEND_SYSTEM.md`,
+`methodology-tips.md`, `context-inject.json`, and `skills/`/`extensions/`/`sessions/`.
+
+To put the CLI on your PATH:
+
+```bash
+./scripts/pi-glider self-install   # symlinks to ~/.local/bin/pi-glider
+which pi-glider                    # expect ~/.local/bin/pi-glider
 ```
 
 ---
@@ -102,7 +125,7 @@ Expect node v22.x, pi 0.x, all 14 tools `OK`, and `pi-mcp-extension` present.
 ### C1. Models resolve
 
 ```bash
-docker run --rm -v ~/.config/pi-glider:/root/.pi/agent --entrypoint bash pi-glider:latest \
+docker run --rm -v ~/engagements/acme/.pi:/root/.pi/agent --entrypoint bash pi-glider:latest \
   -c 'pi --list-models'
 ```
 
@@ -111,7 +134,7 @@ Expect a table with your providers and models (e.g. `lmstudio` / `qwen/qwen3.8-2
 ### C2. Extension is registered
 
 ```bash
-docker run --rm -v ~/.config/pi-glider:/root/.pi/agent --entrypoint bash pi-glider:latest \
+docker run --rm -v ~/engagements/acme/.pi:/root/.pi/agent --entrypoint bash pi-glider:latest \
   -c 'pi list'
 ```
 
@@ -148,7 +171,7 @@ Expect `200`. (For a LAN server, curl the LAN IP directly — the bridge network
 ### D3. Non-interactive inference test
 
 ```bash
-docker run --rm -v ~/.config/pi-glider:/root/.pi/agent --entrypoint bash pi-glider:latest -c \
+docker run --rm -v ~/engagements/acme/.pi:/root/.pi/agent --entrypoint bash pi-glider:latest -c \
   'pi -p "Reply with exactly: OK" --model lmstudio/qwen/qwen3.8-27b --no-session'
 ```
 
@@ -158,7 +181,7 @@ Expect the model to reply (e.g. `OK`). This proves end-to-end inference through 
 ### D4. Interactive test (optional)
 
 ```bash
-./scripts/pi-glider.sh ~/engagements/<name>
+./scripts/pi-glider ~/engagements/acme
 ```
 
 Attach to the TUI, select the model, and send a prompt. Confirm a response.
@@ -238,16 +261,18 @@ This proves the bridge rewrites `Host` on the keep-alive POSTs, not just the ini
 ### E4. Point mcp.json at the bridge
 
 ```bash
-$EDITOR ~/.config/pi-glider/mcp.json
+$EDITOR ~/engagements/acme/.pi/mcp.json
 ```
 
 Set `mcpServers.burp.url` to `http://host.docker.internal:9877`. (On Linux you can instead use
-`--network=host` and point directly at `http://127.0.0.1:9876`.)
+`--network=host` and point directly at `http://127.0.0.1:9876`.) Edit the per-engagement
+`.pi/mcp.json` — that is what the container mounts. If you already set it in A6 before seeding,
+this should already be correct.
 
 ### E5. Confirm the MCP server connects (interactive)
 
 ```bash
-./scripts/pi-glider.sh ~/engagements/<name>
+./scripts/pi-glider ~/engagements/acme
 ```
 
 In the Pi TUI:
@@ -267,14 +292,14 @@ Burp"). Tools appear as `mcp_burp_*`. Confirm the tool returns real data.
 
 ## Part F — Full launch
 
-### F1. Launch via the wrapper
+### F1. Launch via the CLI
 
 ```bash
-./scripts/pi-glider.sh ~/engagements/<name>
+./scripts/pi-glider ~/engagements/acme
 ```
 
-The wrapper mounts `~/.config/pi-glider` → `/root/.pi/agent`, the engagement dir → `/engagement`,
-and `<engagement>/sessions` → `/root/.pi/agent/sessions`.
+The CLI seeds `<engagement>/.pi/` (if needed), starts the Burp bridge (container mode), and mounts
+`<engagement>/.pi` → `/root/.pi/agent` and the engagement dir → `/engagement`.
 
 ### F2. Verify mounts + sessions
 
@@ -285,7 +310,7 @@ docker run --rm --entrypoint bash pi-glider:latest -c 'ls -la /engagement /root/
 ```
 
 Expect `/engagement` to contain `RoE.md` and `/root/.pi/agent` to contain your config + skills.
-After a session, confirm Pi session files land in `~/engagements/<name>/sessions/`.
+After a session, confirm Pi session files land in `~/engagements/<name>/.pi/sessions/`.
 
 ---
 
