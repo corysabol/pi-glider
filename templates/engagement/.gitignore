@@ -2,4 +2,5 @@
 # Keep RoE.md and notes/ under version control if desired.
 /recon/
 /evidence/
-/sessions/
+/sessions/       # legacy location (pre-.pi agentDir)
+/.pi/            # per-engagement agentDir (seeded from global; may contain secrets)

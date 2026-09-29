@@ -11,10 +11,10 @@ Three layers work together:
    prompt and injected every turn (so it survives compaction).
 2. **`config/methodology-tips.md`** — operator-editable general testing heuristics (seeded once,
    never clobbered unless `--force`).
-3. **`extensions/pi-glider-compaction/`** — a small extension that injects the tips at
-   `session_start`, and re-injects the full `pi-glider` skill body **and** the tips after every
-   `session_compact`, so the methodology is fresh again after the model's earlier read of it is
-   summarized away.
+3. **`extensions/pi-ctx-injector/`** — a small, general-purpose extension that reads
+   `config/context-inject.json` (`onStart` / `onCompact` file lists) and injects those files as
+   hidden messages at `session_start` and after every `session_compact`, so the material is fresh
+   again after the model's earlier read of it is summarized away.
 
 ## Mechanism (from Pi source)
 
@@ -48,11 +48,19 @@ You are pi-glider, a penetration-testing agent running in a Kali Linux container
 
 ## Injection
 
-`extensions/pi-glider-compaction/index.ts` has two handlers:
+`extensions/pi-ctx-injector/index.ts` reads `context-inject.json` from the agentDir:
 
-- `session_start` — injects `methodology-tips.md` once, so the tips are in context from the first
-  turn.
-- `session_compact` — re-injects both `skills/core/pi-glider/SKILL.md` and `methodology-tips.md`.
+```json
+{
+  "onStart":   ["methodology-tips.md"],
+  "onCompact": ["skills/core/pi-glider/SKILL.md", "methodology-tips.md"]
+}
+```
+
+Paths are relative to the agentDir. It has two handlers:
+
+- `session_start` — injects the `onStart` files once, so they're in context from the first turn.
+- `session_compact` — re-injects the `onCompact` files.
 
 Both call `pi.sendMessage({ customType, content, display: false }, { deliverAs: "steer" })`. Custom
 messages are converted to `user` role in LLM context (`convertToLlm`), so the content is injected
@@ -60,8 +68,11 @@ without triggering a spurious turn; `display: false` keeps it out of the transcr
 `ctx.ui.setStatus(...)` writes a confirmation to the footer status bar (which survives
 compaction's transcript rebuild, unlike `notify`).
 
-`scripts/install.sh` seeds `APPEND_SYSTEM.md`, `methodology-tips.md` (and `SYSTEM.md`, if present)
-into the agentDir.
+Because the file lists are configurable, the same extension serves non-pentest use cases (general
+programming, research, game dev) — just point `onStart`/`onCompact` at the relevant skills/tips.
+
+`scripts/install.sh` seeds `APPEND_SYSTEM.md`, `methodology-tips.md`, `context-inject.json` (and
+`SYSTEM.md`, if present) into the agentDir.
 
 ## Follow-ups
 

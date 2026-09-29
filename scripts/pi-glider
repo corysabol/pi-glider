@@ -1,0 +1,124 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# pi-glider — single entry point for the pi-glider pentest agent.
+#
+# Usage:
+#   pi-glider install [--force]       seed the global agentDir (~/.config/pi-glider)
+#   pi-glider self-install             symlink this CLI into ~/.local/bin (put it on PATH)
+#   pi-glider [dir]                   launch in the Kali container (default)
+#   pi-glider --no-container [dir]    launch on the host (no container)
+#
+# Each engagement directory gets a local `.pi/` agentDir, seeded once from the global agentDir, so
+# config, skills, and extensions travel with the engagement. Edit the engagement `.pi/` during an
+# engagement; copy changes back to the global agentDir to reuse them later.
+#
+# Environment:
+#   PI_GLIDER_CONFIG   global agentDir (default ~/.config/pi-glider)
+#   PI_GLIDER_IMAGE    container image (default pi-glider:latest)
+#   PI_GLIDER_BRIDGE   set to 0 to skip auto-starting the Burp MCP bridge (container mode only)
+#   PI_GLIDER_BRIDGE_LOG  bridge log file
+#   PI_GLIDER_BIN_DIR   install dir for `self-install` (default ~/.local/bin)
+
+# Resolve the script's real location (follow symlinks) so the CLI works when installed to PATH.
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do
+  DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ "$SOURCE" != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+CONFIG_DIR="${PI_GLIDER_CONFIG:-$HOME/.config/pi-glider}"
+IMAGE="${PI_GLIDER_IMAGE:-pi-glider:latest}"
+BRIDGE_LOG="${PI_GLIDER_BRIDGE_LOG:-$CONFIG_DIR/bridge.log}"
+
+# Resolve an engagement dir to an absolute path (defaults to the current directory).
+resolve_dir() {
+  (cd "${1:-$PWD}" && pwd)
+}
+
+# Seed <dir>/.pi from the global agentDir (once; never clobber an existing one).
+seed_engagement() {
+  local dir="$1"
+  local pi_dir="$dir/.pi"
+  if [ -d "$pi_dir" ]; then
+    return
+  fi
+  echo "[pi-glider] seeding $pi_dir from $CONFIG_DIR"
+  mkdir -p "$pi_dir/sessions"
+  for f in models.json mcp.json settings.json APPEND_SYSTEM.md methodology-tips.md context-inject.json SYSTEM.md; do
+    [ -f "$CONFIG_DIR/$f" ] && cp "$CONFIG_DIR/$f" "$pi_dir/$f"
+  done
+  for d in skills prompts extensions; do
+    [ -d "$CONFIG_DIR/$d" ] && cp -R "$CONFIG_DIR/$d" "$pi_dir/$d"
+  done
+}
+
+# Start the Burp MCP bridge (container mode) and arrange cleanup. Burp's MCP server rejects
+# non-localhost Host headers, so the container reaches it through a Host-rewriting bridge.
+start_bridge() {
+  if [ "${PI_GLIDER_BRIDGE:-1}" != "1" ] || pgrep -f "burp-mcp-bridge.py" >/dev/null 2>&1; then
+    return
+  fi
+  python3 "$REPO_ROOT/scripts/burp-mcp-bridge.py" >>"$BRIDGE_LOG" 2>&1 &
+  local pid=$!
+  sleep 0.5
+  if kill -0 "$pid" 2>/dev/null; then
+    echo "[pi-glider] started burp-mcp-bridge (pid $pid, log $BRIDGE_LOG)"
+    trap 'kill "$pid" 2>/dev/null || true' EXIT
+  else
+    echo "[pi-glider] WARNING: burp-mcp-bridge failed to start; see $BRIDGE_LOG" >&2
+  fi
+}
+
+launch_container() {
+  local dir
+  dir="$(resolve_dir "${1:-}")"
+  seed_engagement "$dir"
+  start_bridge
+  docker run --rm -it \
+    -e PI_CODING_AGENT_DIR=/root/.pi/agent \
+    -v "$dir/.pi:/root/.pi/agent" \
+    -v "$dir:/engagement" \
+    --add-host=host.docker.internal:host-gateway \
+    "$IMAGE"
+}
+
+launch_host() {
+  local dir
+  dir="$(resolve_dir "${1:-}")"
+  seed_engagement "$dir"
+  cd "$dir"
+  PI_CODING_AGENT_DIR="$dir/.pi" exec pi
+}
+
+# Symlink this CLI into a directory on PATH (default ~/.local/bin).
+install_self() {
+  local bin_dir="${PI_GLIDER_BIN_DIR:-$HOME/.local/bin}"
+  local dest="$bin_dir/pi-glider"
+  mkdir -p "$bin_dir"
+  ln -sf "$REPO_ROOT/scripts/pi-glider" "$dest"
+  echo "[pi-glider] installed $dest -> $REPO_ROOT/scripts/pi-glider"
+  case ":$PATH:" in
+    *":$bin_dir:"*) ;;
+    *) echo "[pi-glider] WARNING: $bin_dir is not on your PATH; add it or set PI_GLIDER_BIN_DIR to a dir that is." >&2 ;;
+  esac
+}
+
+case "${1:-}" in
+  install)
+    shift
+    exec bash "$REPO_ROOT/scripts/install.sh" "$@"
+    ;;
+  self-install)
+    install_self
+    ;;
+  --no-container|-n)
+    shift
+    launch_host "${1:-}"
+    ;;
+  *)
+    launch_container "${1:-}"
+    ;;
+esac

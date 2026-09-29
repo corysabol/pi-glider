@@ -7,12 +7,12 @@ services:
     environment:
       - PI_CODING_AGENT_DIR=/root/.pi/agent
     volumes:
-      # Host agentDir → container agentDir (config + skills)
-      - ${PI_GLIDER_CONFIG}:/root/.pi/agent
+      # Engagement-local agentDir (config + skills + extensions + sessions) → container agentDir.
+      # Seed it first with `pi-glider <dir>` (or `scripts/pi-glider`), or copy the global agentDir
+      # into <engagement>/.pi manually.
+      - ${ENGAGEMENT_DIR}/.pi:/root/.pi/agent
       # Engagement dir → /engagement (working dir + evidence)
       - ${ENGAGEMENT_DIR}:/engagement
-      # Pi session history → engagement dir
-      - ${ENGAGEMENT_DIR}/sessions:/root/.pi/agent/sessions
     # Bridge network (default). Host services reachable via host.docker.internal.
     # On macOS, host.docker.internal is resolved automatically. The extra_hosts entry
     # below provides it on Linux. For full --network=host semantics on Linux, replace

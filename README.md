@@ -1,13 +1,21 @@
 # pi-glider
 
-A containerized, **Pi-based penetration-testing agent**. A Kali Linux container runs the
-[Pi coding agent](https://pi.dev) alongside the ProjectDiscovery toolchain, driven by an
-operator-authored `RoE.md` (rules of engagement) and wired to Burp Suite over MCP/SSE.
+A **Pi-based penetration-testing agent**. It runs the [Pi coding agent](https://pi.dev) with a
+curated set of skills, extensions, and the ProjectDiscovery toolchain, driven by an operator-authored
+engagement brief (`RoE.md` for network/web, or a MASTG kickoff for mobile) and wired to Burp Suite
+over MCP/SSE.
 
-- **Sandboxed**: the container is the sandbox; Pi's own sandbox is disabled.
-- **Disposable**: the container can be thrown away; evidence and session history persist on the host.
-- **Scoped**: the agent aligns every action against `RoE.md` in the engagement directory.
-- **Configurable**: config, skills, and tool preferences live on the host and are bind-mounted in.
+Two run modes:
+
+- **Container (default)** — a Kali Linux container runs Pi alongside the ProjectDiscovery toolchain.
+  The container is the sandbox (Pi's own sandbox is disabled) and is disposable; evidence and session
+  history persist in the engagement directory.
+- **Host (`--no-container`)** — Pi runs directly on the host, for engagements that need host-only
+  tooling (e.g. ADB for mobile).
+
+- **Scoped** — the agent aligns every action against the engagement brief in the engagement directory.
+- **Per-engagement** — each engagement gets a local `.pi/` agentDir (config + skills + extensions),
+  seeded from a global template dir, so config travels with the engagement and is easy to clean up.
 
 See [phase0_implementation_plan.md](phase0_implementation_plan.md) for the full plan and
 [`docs/architecture.md`](docs/architecture.md) for the architecture.
@@ -15,8 +23,8 @@ See [phase0_implementation_plan.md](phase0_implementation_plan.md) for the full 
 ## Quick start
 
 ```bash
-# 1. Seed the live agentDir on the host (config + skills)
-./scripts/install.sh
+# 1. Seed the global agentDir on the host (config + skills + extensions)
+./scripts/pi-glider install        # or: ./scripts/install.sh
 
 # 2. Edit your inference endpoint and MCP servers
 $EDITOR ~/.config/pi-glider/models.json
@@ -26,30 +34,47 @@ $EDITOR ~/.config/pi-glider/mcp.json
 mkdir -p ~/engagements/acme && cp templates/engagement/RoE.md ~/engagements/acme/RoE.md
 $EDITOR ~/engagements/acme/RoE.md
 
-# 4. Build the image
+# 4. Build the image (container mode only)
 docker build -t pi-glider:latest container/
 
-# 5. Launch the agent (or use the wrapper)
-./scripts/pi-glider.sh ~/engagements/acme
+# 5. Launch the agent
+./scripts/pi-glider ~/engagements/acme            # container (default)
+./scripts/pi-glider --no-container ~/engagements/acme   # host, no container
 ```
 
-The wrapper auto-starts the Burp MCP bridge (see below) if it isn't already running.
+To install the CLI to your PATH (so you can run `pi-glider` from any directory):
 
-The container mounts:
+```bash
+./scripts/pi-glider self-install   # symlinks to ~/.local/bin/pi-glider
+```
 
-- `~/.config/pi-glider/` → `/root/.pi/agent` (Pi agentDir: config + skills)
+`~/.local/bin` must be on your `PATH`; override the target dir with `PI_GLIDER_BIN_DIR` (e.g.
+`/usr/local/bin`). This is a symlink, so it tracks the repo; a proper package/installer is a
+future goal.
+
+On first launch, `pi-glider` seeds a local `.pi/` agentDir into the engagement directory (copied
+from the global `~/.config/pi-glider/`), so config, skills, and extensions travel with the
+engagement. Edit the engagement `.pi/` during an engagement; copy changes back to the global
+dir to reuse them later.
+
+In container mode the CLI auto-starts the Burp MCP bridge (see below) if it isn't already running,
+and mounts:
+
+- `~/engagements/<name>/.pi/` → `/root/.pi/agent` (Pi agentDir: config + skills + sessions)
 - `~/engagements/<name>/` → `/engagement` (working dir + evidence)
-- `~/engagements/<name>/sessions/` → `/root/.pi/agent/sessions` (session history)
+
+In `--no-container` mode, Pi runs directly on the host with `PI_CODING_AGENT_DIR` pointed at the
+engagement `.pi/` — useful for engagements that need host-only tooling (e.g. ADB for mobile).
 
 ## Layout
 
 ```
-config/        canonical agentDir templates (models.json, mcp.json, settings.json, APPEND_SYSTEM.md)
-skills/        source-of-truth skills (core/, recon/, testing/, tools/, mcp/, workflows/)
-extensions/    Pi extensions (pi-glider-banner: glider header; pi-glider-compaction: re-inject manual after compaction)
+config/        canonical agentDir templates (models.json, mcp.json, settings.json, APPEND_SYSTEM.md, methodology-tips.md, context-inject.json)
+skills/        source-of-truth skills (core/ = operating manuals; recon/, testing/, tools/, mcp/, workflows/)
+extensions/    Pi extensions (pi-glider-banner: glider header; pi-ctx-injector: inject reference material)
 container/     Dockerfile, docker-compose.yml, entrypoint, pdtm tool list
-templates/     engagement templates (RoE.md, .gitignore)
-scripts/       install.sh (seed config) + pi-glider.sh (launch wrapper) + burp-mcp-bridge.py (Host-rewriting proxy)
+templates/     engagement templates (engagement/: RoE, finding, .gitignore; mastg/: MASTG kickoff)
+scripts/       pi-glider (CLI: install / container / --no-container) + install.sh + pi-glider.sh + burp-mcp-bridge.py
 docs/          architecture, skill-authoring, engagement-workflow, smoke-test
 ```
 
@@ -58,9 +83,21 @@ docs/          architecture, skill-authoring, engagement-workflow, smoke-test
 Skills follow the [Agent Skills standard](https://agentskills.io/specification) and are
 portable across Pi, Claude Code, and Bionic. See [`docs/skill-authoring.md`](docs/skill-authoring.md).
 
-Categories: `core/` (operating manual, authoring, engagement setup), `recon/` (subdomain, DNS,
-port, HTTP, fingerprint, JS, cloud, CIDR), `testing/` (nuclei), `tools/` (per-tool reference),
-`mcp/` (Burp), and `workflows/` (external recon sweep).
+Categories: `core/` (operating manuals — `pi-glider` for network/web, `mastg-android` for mobile —
+plus authoring and engagement setup), `recon/` (subdomain, DNS, port, HTTP, fingerprint, JS, cloud,
+CIDR), `testing/` (nuclei), `tools/` (per-tool reference), `mcp/` (Burp), and `workflows/` (external
+recon sweep).
+
+## Engagement types
+
+The operating manual is the main thing that changes between engagement types; everything else
+(`APPEND_SYSTEM.md`, the ctx-injector, the tooling) is shared.
+
+- **Network / web** — use the `pi-glider` skill and an `RoE.md` brief
+  (`templates/engagement/RoE.md`).
+- **Mobile (client-side MASTG)** — use the `mastg-android` skill and the MASTG kickoff
+  (`templates/mastg/MASTG-Android-Kickoff.md`). Run on the host (`--no-container`) for ADB/AVD
+  access, and point `context-inject.json` at `skills/core/mastg-android/SKILL.md`.
 
 ## Operating the agent
 
@@ -92,6 +129,8 @@ the prompt:
   your actual instruction.
 - `/skill:pi-glider <prompt>` — loads the methodology **and** runs `<prompt>` in the same turn.
 
+For a mobile engagement, load `/skill:mastg-android` instead of `/skill:pi-glider`.
+
 Prefer attaching the task to the `/skill:` command rather than loading and then prompting
 separately — it removes any ambiguity about whether to act.
 
@@ -111,26 +150,32 @@ Confirmed findings are written to `evidence/` using the finding template
 See [`docs/engagement-workflow.md`](docs/engagement-workflow.md) and
 `skills/core/pi-glider/SKILL.md` for the full methodology.
 
-## System prompt, tips & compaction
+## System prompt & guidelines
 
-Three layers keep the agent aligned with the pi-glider methodology even as context grows and is
-compacted:
+Two mechanisms keep the agent aligned even as context grows and is compacted:
 
-- **`config/APPEND_SYSTEM.md`** — a minimal, purpose-aligned system prompt appended to Pi's default
-  prompt and injected every turn (so it survives compaction). It restates the core invariants (RoE
-  is source of truth, methodology, breadth over depth) and points at the `pi-glider` skill and the
-  tips file.
-- **`config/methodology-tips.md`** — operator-editable general testing heuristics (e.g. map the
-  real API surface, not just client routes). Seeded once by `install.sh` (never clobbered unless
-  `--force`), so the operator owns it.
-- **`extensions/pi-glider-compaction/`** — a small extension that injects the tips at
-  `session_start`, and on every `session_compact` re-injects both the full `pi-glider` skill body
-  and the tips as hidden messages so the methodology stays fresh. It also writes a confirmation to
-  the **footer status bar** (`pi-glider: re-injected operating manual + tips after compaction`) so
-  the operator can see it ran.
+- **`config/APPEND_SYSTEM.md`** — a general system prompt appended to Pi's default prompt and
+  injected **every turn** (so it survives compaction). It holds the universal invariants (identity,
+  respect scope, breadth over depth, write findings to files) that apply to every engagement type.
+- **`config/context-inject.json` + `extensions/pi-ctx-injector/`** — the *engagement-specific*
+  guidelines. The extension reads `context-inject.json` (`onStart` / `onCompact` file lists) and
+  injects those files at `session_start` and after every `session_compact`, so the operating manual
+  and tips stay fresh. Swap the files to change what the agent operates under:
 
-`scripts/install.sh` seeds all three into the agentDir. See [`docs/system-prompt.md`](docs/system-prompt.md)
-for the rationale and the `SYSTEM.md` (full replacement) alternative.
+  ```jsonc
+  // network / web (default)
+  { "onStart":   ["methodology-tips.md"],
+    "onCompact": ["skills/core/pi-glider/SKILL.md", "methodology-tips.md"] }
+
+  // mobile (client-side MASTG)
+  { "onStart":   ["methodology-tips.md"],
+    "onCompact": ["skills/core/mastg-android/SKILL.md", "methodology-tips.md"] }
+  ```
+
+`config/methodology-tips.md` is operator-editable general heuristics (seeded once, never clobbered
+unless `--force`). `scripts/install.sh` seeds all of these into the agentDir. See
+[`docs/system-prompt.md`](docs/system-prompt.md) for the rationale and the `SYSTEM.md` (full
+replacement) alternative.
 
 ### Debugging extensions
 
@@ -157,8 +202,8 @@ forwards to Burp on `127.0.0.1:9876`, rewriting the `Host` header to `127.0.0.1:
 request (so HTTP keep-alive works). `config/mcp.json` points Burp at the bridge
 (`http://host.docker.internal:9877`).
 
-The launch wrapper (`scripts/pi-glider.sh`) starts the bridge automatically if it isn't already
-running and tears it down when the session ends. To run it manually:
+The `pi-glider` CLI (`scripts/pi-glider`) starts the bridge automatically in container mode if it
+isn't already running and tears it down when the session ends. To run it manually:
 
 ```bash
 python3 scripts/burp-mcp-bridge.py
