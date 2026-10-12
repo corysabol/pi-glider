@@ -21,7 +21,6 @@ Place skills under the appropriate category in the repo's `skills/` tree:
 - `recon/` — recon techniques
 - `testing/` — active testing
 - `tools/` — per-tool reference
-- `mcp/` — Burp/Caido MCP integration
 - `workflows/` — operator-defined reusable workflows
 
 ## Front matter

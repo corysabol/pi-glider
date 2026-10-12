@@ -2,8 +2,8 @@
 
 A **Pi-based penetration-testing agent**. It runs the [Pi coding agent](https://pi.dev) with a
 curated set of skills, extensions, and the ProjectDiscovery toolchain, driven by an operator-authored
-engagement brief (`RoE.md` for network/web, or a MASTG kickoff for mobile) and wired to Burp Suite
-over MCP/SSE.
+engagement brief (`RoE.md` for network/web, or a MASTG kickoff for mobile), with an in-container
+Caido instance for web-traffic capture and inspection.
 
 Two run modes:
 
@@ -26,12 +26,11 @@ See [phase0_implementation_plan.md](phase0_implementation_plan.md) for the full 
 # 1. Seed the global agentDir on the host (config + skills + extensions)
 ./scripts/pi-glider install        # or: ./scripts/install.sh
 
-# 2. Edit your inference endpoint and MCP servers
+# 2. Edit your inference endpoint
 $EDITOR ~/.config/pi-glider/models.json
-$EDITOR ~/.config/pi-glider/mcp.json
 
-# 3. Create an engagement directory and write your RoE
-mkdir -p ~/engagements/acme && cp templates/engagement/RoE.md ~/engagements/acme/RoE.md
+# 3. Initialize the engagement directory (RoE template + working dirs + .pi agentDir)
+./scripts/pi-glider init ~/engagements/acme
 $EDITOR ~/engagements/acme/RoE.md
 
 # 4. Build the image (container mode only)
@@ -57,11 +56,11 @@ from the global `~/.config/pi-glider/`), so config, skills, and extensions trave
 engagement. Edit the engagement `.pi/` during an engagement; copy changes back to the global
 dir to reuse them later.
 
-In container mode the CLI auto-starts the Burp MCP bridge (see below) if it isn't already running,
+In container mode the CLI publishes the Caido UI (host `5000`) and HTTP proxy (host `8080`) ports
 and mounts:
 
-- `~/engagements/<name>/.pi/` → `/root/.pi/agent` (Pi agentDir: config + skills + sessions)
-- `~/engagements/<name>/` → `/engagement` (working dir + evidence)
+- `~/engagements/<name>/` → `/engagement` (working dir + evidence; the agent's config lives at
+  `/engagement/.pi`, i.e. `PI_CODING_AGENT_DIR=/engagement/.pi`)
 
 In `--no-container` mode, Pi runs directly on the host with `PI_CODING_AGENT_DIR` pointed at the
 engagement `.pi/` — useful for engagements that need host-only tooling (e.g. ADB for mobile).
@@ -74,7 +73,7 @@ skills/        source-of-truth skills (core/ = operating manuals; recon/, testin
 extensions/    Pi extensions (pi-glider-banner: glider header; pi-ctx-injector: inject reference material)
 container/     Dockerfile, docker-compose.yml, entrypoint, pdtm tool list
 templates/     engagement templates (engagement/: RoE, finding, .gitignore; mastg/: MASTG kickoff)
-scripts/       pi-glider (CLI: install / container / --no-container) + install.sh + pi-glider.sh + burp-mcp-bridge.py
+scripts/       pi-glider (CLI: install / container / --no-container) + install.sh + pi-glider.sh
 docs/          architecture, skill-authoring, engagement-workflow, smoke-test
 ```
 
@@ -85,7 +84,7 @@ portable across Pi, Claude Code, and Bionic. See [`docs/skill-authoring.md`](doc
 
 Categories: `core/` (operating manuals — `pi-glider` for network/web, `mastg-android` for mobile —
 plus authoring and engagement setup), `recon/` (subdomain, DNS, port, HTTP, fingerprint, JS, cloud,
-CIDR), `testing/` (nuclei), `tools/` (per-tool reference), `mcp/` (Burp), and `workflows/` (external
+CIDR), `testing/` (nuclei), `tools/` (per-tool reference), and `workflows/` (external
 recon sweep).
 
 ## Engagement types
@@ -189,31 +188,23 @@ replacement) alternative.
   hides. To see them, run non-interactively (`pi --print "..."` or `--mode text`) or redirect
   stderr to a file (`pi 2>/tmp/pi-ext.log`).
 
-## Burp MCP bridge
+## Caido proxy & UI (in-container)
 
-Burp Suite's MCP server rejects any request whose `Host`/`Origin`/`Referer` header isn't
-`localhost` or `127.0.0.1` (hardcoded DNS-rebinding protection). The container reaches the host via
-`host.docker.internal`, which Burp rejects with `403` — and changing Burp's listen address to
-`0.0.0.0` does **not** bypass it, because the guard checks the `Host` header value, not the bind
-interface.
+The container runs a headless [Caido](https://caido.io) instance as a web-proxy sidecar. Every
+proxy-aware client — in-container Chromium (via Playwright), `curl`, `wget`, Python `requests`, the
+ProjectDiscovery tools, and the Pi agent itself — is routed through it via `http_proxy`/
+`https_proxy`/`ALL_PROXY` (exported in `container/entrypoint.sh`), so all web traffic is captured
+in one place.
 
-`scripts/burp-mcp-bridge.py` is a small host-side reverse proxy that listens on `0.0.0.0:9877` and
-forwards to Burp on `127.0.0.1:9876`, rewriting the `Host` header to `127.0.0.1:9876` on **every**
-request (so HTTP keep-alive works). `config/mcp.json` points Burp at the bridge
-(`http://host.docker.internal:9877`).
+- **Proxy** — `http://127.0.0.1:8080` inside the container (published to host `8080`).
+- **UI/API** — `http://host.docker.internal:5000` (published to host `5000`); open
+  http://localhost:5000 in your host browser to inspect captured requests.
 
-The `pi-glider` CLI (`scripts/pi-glider`) starts the bridge automatically in container mode if it
-isn't already running and tears it down when the session ends. To run it manually:
+A static EC (P-256) CA is baked into the image and imported into both Caido and the system trust
+store, so HTTPS interception is trusted by the in-container tools without `-k`. The project is
+created and selected at startup (`container/caido-init.js`), so captured traffic has a home.
 
-```bash
-python3 scripts/burp-mcp-bridge.py
-```
-
-Environment: `BRIDGE_LISTEN_HOST`/`BRIDGE_LISTEN_PORT` (default `0.0.0.0`/`9877`) and
-`BRIDGE_TARGET_HOST`/`BRIDGE_TARGET_PORT` (default `127.0.0.1`/`9876`). On Linux you can instead
-use `--network=host` and point `mcp.json` directly at `http://127.0.0.1:9876` (no bridge needed).
-
-See [`docs/smoke-test.md`](docs/smoke-test.md) Part E for validation steps.
+See [`docs/smoke-test.md`](docs/smoke-test.md) Part D for validation steps.
 
 ## Startup banner
 

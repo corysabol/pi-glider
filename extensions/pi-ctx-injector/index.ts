@@ -15,7 +15,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
-const AGENT_DIR = process.env.PI_CODING_AGENT_DIR ?? "/root/.pi/agent";
+const AGENT_DIR = process.env.PI_CODING_AGENT_DIR ?? "/engagement/.pi";
 const CONFIG_PATH = path.join(AGENT_DIR, "context-inject.json");
 
 interface InjectConfig {

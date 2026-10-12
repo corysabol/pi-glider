@@ -22,14 +22,14 @@ Operator host
 │           ├── APPEND_SYSTEM.md / methodology-tips.md / context-inject.json
 │           ├── skills/  extensions/
 │           └── sessions/           # Pi session history
-└── Burp Suite (MCP over SSE) + LAN inference server
+└── LAN inference server
 
 Kali Linux container (disposable; container mode only)
-├── /root/.pi/agent   ← bind-mount <engagement>/.pi/   (Pi agentDir)
-├── /engagement       ← bind-mount <engagement>/        (working dir + evidence)
+├── /engagement       ← bind-mount <engagement>/        (working dir + evidence; .pi agentDir)
 ├── Pi coding agent (TUI session the operator attaches to)
 ├── ProjectDiscovery toolchain (installed via pdtm)
-└── pi-mcp-extension → SSE to host Burp MCP (via bridge)
+├── Caido (headless web proxy + UI/API) — single capture point for web traffic
+└── Playwright Chromium → proxies through Caido
 ```
 
 ## 2. Key properties
@@ -62,8 +62,9 @@ pi-glider uses a **two-level** model:
    the repo by `scripts/install.sh` (or `scripts/pi-glider install`). This is where operators keep
    their canonical config, skills, and extensions. It is *not* mounted into the container directly.
 2. **Per-engagement agentDir** — `<engagement>/.pi/`. Seeded once from the global dir by
-   `scripts/pi-glider <dir>` (never clobbers an existing `.pi/`). This is what actually runs:
-   - **Container mode** — mounted to `/root/.pi/agent` (with `PI_CODING_AGENT_DIR=/root/.pi/agent`).
+   `pi-glider init <dir>` (also done implicitly by `pi-glider <dir>` on first launch; never
+   clobbers an existing `.pi/`). This is what actually runs:
+   - **Container mode** — mounted via the engagement dir; `PI_CODING_AGENT_DIR=/engagement/.pi`.
    - **Host mode (`--no-container`)** — used directly via `PI_CODING_AGENT_DIR=<engagement>/.pi`.
 
 This cleanly separates the pentest agent's config/skills from the operator's normal Pi config, and
@@ -74,13 +75,13 @@ back to the global dir to reuse them later.
 ~/.config/pi-glider/          (global template dir)
 ├── models.json        # inference providers/models (LAN server, LM Studio, etc.)
 ├── settings.json      # Pi settings (skill paths, tool prefs; sandbox disabled)
-├── mcp.json           # MCP servers (Burp over SSE, etc.)
+├── mcp.json           # MCP servers (reserved — Pi native /mcp going forward)
 ├── APPEND_SYSTEM.md   # appended system prompt (injected every turn)
 ├── methodology-tips.md # operator-editable general testing heuristics
 ├── context-inject.json # ctx-injector onStart/onCompact file lists
-├── skills/            # skills (core/ operating manuals + recon/testing/tools/mcp/workflows)
+├── skills/            # skills (core/ operating manuals + recon/testing/tools/workflows)
 ├── prompts/           # prompt templates (optional, operator-defined)
-└── extensions/        # extensions (pi-mcp-extension, pi-glider-banner, pi-ctx-injector)
+└── extensions/        # extensions (pi-glider-banner, pi-ctx-injector)
 ```
 
 The repo is the canonical/versioned source of truth; `scripts/install.sh` seeds the global dir from
@@ -88,32 +89,14 @@ The repo is the canonical/versioned source of truth; `scripts/install.sh` seeds 
 
 ## 5. MCP
 
-Pi does not ship MCP built-in; it is supplied by an extension. pi-glider standardizes on
-**`pi-mcp-extension`** (`pi install npm:pi-mcp-extension`), which supports `stdio`,
-`streamable-http`, and `sse` transports with per-server configurability (timeouts, lifecycle,
-health checks).
+Pi agent v1.0+ ships **native MCP** (a built-in `/mcp` command). pi-glider no longer bundles
+`pi-mcp-extension` (its slash command collided with Pi's native `/mcp`) and no longer ships a
+default MCP server — `config/mcp.json` is an empty placeholder (`{ "mcpServers": {} }`).
 
-Config is read from the agentDir's `mcp.json` (the per-engagement `.pi/mcp.json`). See
-`config/mcp.json` for the shape.
-
-`pi-mcp-extension` is baked into the image at build time (global npm) and registered via
-`config/settings.json` (`packages`). It is not installed at runtime, so it survives container
-teardown.
-
-Burp is the assumed default MCP server (team standard), reached over SSE. Operators can add any
-other MCP servers by editing `mcp.json`.
-
-Burp's MCP server rejects non-localhost `Host` headers (hardcoded DNS-rebinding protection in
-`KtorServerManager.kt`: `Host`/`Origin`/`Referer` must be `localhost` or `127.0.0.1`, and the port
-must match). This is a hard guardrail — changing Burp's listen address to `0.0.0.0` does not bypass
-it, because the check is on the `Host` header value, not the bind interface. The container reaches
-the host via `host.docker.internal`, which Burp rejects with `403`.
-
-To work around it, the container reaches Burp through a small host-side bridge
-(`scripts/burp-mcp-bridge.py`) that rewrites the `Host` header to `127.0.0.1:9876` on **every**
-request (not just the first), so HTTP keep-alive connections work. `config/mcp.json` points at the
-bridge (`host.docker.internal:9877`), which forwards to Burp on `127.0.0.1:9876`. On Linux,
-`--network=host` can reach Burp directly instead (no bridge needed).
+The native MCP configuration schema is not yet wired; when it is, operators will register MCP
+servers through Pi's built-in `/mcp` command rather than an extension. In the meantime, the
+in-container **Caido** proxy is the capture point for web traffic (instead of a Burp MCP
+integration).
 
 ## 6. Networking
 
@@ -129,11 +112,11 @@ Consequences (container mode):
 
 - `models.json` `baseUrl` for LM Studio on the host: `http://host.docker.internal:1234/v1`
   (or the LAN IP of the inference desktop).
-- `mcp.json` Burp SSE URL: `http://host.docker.internal:<port>/...`.
+- Caido UI/API is reached at `http://localhost:5000` from the host browser.
 
-**Host mode (`--no-container`)** has no bridge: `host.docker.internal` does not resolve, so
-`mcp.json` must point Burp at `http://127.0.0.1:9876` (no bridge needed), and inference reaches
-the host/LAN server directly (e.g. `http://127.0.0.1:1234/v1` or the LAN IP).
+**Host mode (`--no-container`)** runs Pi directly on the host with no container and no in-container
+Caido (web-traffic capture is unavailable unless the operator runs their own proxy). Inference
+reaches the host/LAN server directly (e.g. `http://127.0.0.1:1234/v1` or the LAN IP).
 
 ## 7. Sandboxing
 

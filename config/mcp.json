@@ -1,14 +1,3 @@
 {
-  "settings": {
-    "toolPrefix": "mcp",
-    "requestTimeoutMs": 30000,
-    "maxRetries": 5
-  },
-  "mcpServers": {
-    "burp": {
-      "transport": "sse",
-      "url": "http://host.docker.internal:9877",
-      "lifecycle": "lazy"
-    }
-  }
+  "mcpServers": {}
 }

@@ -118,7 +118,7 @@ as a confirmed finding. Stop at confirmation — do not over-exploit.
 ## Evidence handling
 
 - Write all working files and output under `/engagement/` (see layout below).
-- Never write evidence, output, or notes into the repo or the agentDir (`/root/.pi/agent`).
+- Never write evidence, output, or notes into the repo or the agentDir (`/engagement/.pi`).
 - Preserve raw tool output; annotate findings clearly.
 
 ## Working conventions
@@ -143,7 +143,7 @@ You are running in Kali Linux. Use the full toolset available to you, not just o
   `hydra`, `dirb`, `wfuzz`, `dnsrecon`, `enum4linux`, `smbclient`, `responder`, `john`, `hashcat`,
   and many more. Install whatever the task needs.
 - Install additional tools as needed (`pdtm install <tool>` or `apt-get install <tool>`).
-- Use the Burp MCP server (via `mcp_burp_*` tools) for in-depth web testing when available.
+- Observe captured web traffic in Caido (see `tools-caido`) for in-depth web testing.
 
 ## Safety
 

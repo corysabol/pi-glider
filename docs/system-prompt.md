@@ -18,7 +18,7 @@ Three layers work together:
 
 ## Mechanism (from Pi source)
 
-Pi discovers two optional files in the agentDir (`~/.config/pi-glider` → `/root/.pi/agent`):
+Pi discovers two optional files in the agentDir (host `~/.config/pi-glider` → in-container `/engagement/.pi`):
 
 - `SYSTEM.md` — `customPrompt`: **replaces** the entire default prompt (drops the tools list,
   guidelines, and docs paths).

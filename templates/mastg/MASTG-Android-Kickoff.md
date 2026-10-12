@@ -14,7 +14,7 @@ Assess the Android application below against the OWASP MASTG for Android, client
 - Device: AVD emulator (AOSP, rootable via `adb root`)
 
 **Setup notes**
-- Burp Suite is already proxying the device; use Burp MCP to observe traffic (read-only).
+- The device is already proxied through an intercepting proxy (e.g. Burp Suite); observe traffic read-only.
 - Frida is already set up. *(delete this line if Frida is NOT set up — the agent will install it)*
 
 **Scope reminder**

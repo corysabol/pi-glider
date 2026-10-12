@@ -1,14 +1,15 @@
 # Smoke test & validation guide
 
-Step-by-step validation of the pi-glider project, from repo state through the container, inference,
-and Burp MCP. Run top to bottom; each step lists the command, what to expect, and what it confirms.
+Step-by-step validation of the pi-glider project, from repo state through the container, the Caido
+proxy/UI, and inference. Run top to bottom; each step lists the command, what to expect, and what it
+confirms.
 
 ## 0. Prerequisites
 
 - Docker (Desktop) and `git`.
 - For inference: LM Studio (or your LAN inference server) running and serving an OpenAI-compatible
   endpoint (`/v1/models`).
-- For Burp MCP: Burp Suite with the **MCP Server** extension loaded (PortSwigger BAppStore).
+- Caido runs **in-container** — no host-side setup needed; just a web browser to open the UI.
 
 ---
 
@@ -27,7 +28,7 @@ git -C pi-glider log --oneline    # expect: the Phase 0 / container / skills com
 cd pi-glider && find . -type f -not -path './.git/*' | sort
 ```
 
-Expect the layout from `README.md`: `config/`, `skills/{core,recon,testing,tools,mcp,workflows}`,
+Expect the layout from `README.md`: `config/`, `skills/{core,recon,testing,tools,workflows}`,
 `container/`, `templates/`, `scripts/`, `docs/`.
 
 ### A3. Config JSON is valid
@@ -66,8 +67,10 @@ overwrite config files you've edited.
 
 ```bash
 $EDITOR ~/.config/pi-glider/models.json   # set baseUrl to your inference endpoint
-$EDITOR ~/.config/pi-glider/mcp.json      # set the Burp MCP URL (see Part E)
 ```
+
+`config/mcp.json` is an empty placeholder (`{ "mcpServers": {} }`) — MCP is handled by Pi's native
+`/mcp` command going forward; there is no Burp/extension MCP to configure.
 
 ### A7. Seed a per-engagement agentDir + install the CLI
 
@@ -112,11 +115,11 @@ docker run --rm --entrypoint bash pi-glider:latest -c '
   for t in subfinder naabu httpx katana nuclei dnsx uncover tlsx cdncheck asnmap mapcidr interactsh-client proxify notify; do
     command -v "$t" >/dev/null && echo "OK  $t" || echo "MISSING  $t"
   done
-  ls /usr/local/lib/node_modules   # expect: pi-mcp-extension
+  command -v caido-cli >/dev/null && echo "OK  caido-cli" || echo "MISSING  caido-cli"
 '
 ```
 
-Expect node v22.x, pi 0.x, all 14 tools `OK`, and `pi-mcp-extension` present.
+Expect node v22.x, pi 1.x, all 14 tools `OK`, and `caido-cli` present.
 
 ---
 
@@ -125,29 +128,101 @@ Expect node v22.x, pi 0.x, all 14 tools `OK`, and `pi-mcp-extension` present.
 ### C1. Models resolve
 
 ```bash
-docker run --rm -v ~/engagements/acme/.pi:/root/.pi/agent --entrypoint bash pi-glider:latest \
+docker run --rm -v ~/engagements/acme/.pi:/engagement/.pi --entrypoint bash pi-glider:latest \
   -c 'pi --list-models'
 ```
 
 Expect a table with your providers and models (e.g. `lmstudio` / `qwen/qwen3.8-27b`).
 
-### C2. Extension is registered
+### C2. Legacy MCP extension is gone
 
 ```bash
-docker run --rm -v ~/engagements/acme/.pi:/root/.pi/agent --entrypoint bash pi-glider:latest \
+docker run --rm -v ~/engagements/acme/.pi:/engagement/.pi --entrypoint bash pi-glider:latest \
   -c 'pi list'
 ```
 
-Expect `npm:pi-mcp-extension` resolved to `/usr/local/lib/node_modules/pi-mcp-extension`.
+Expect **no** `npm:pi-mcp-extension` entry (it was removed; MCP is now Pi's native `/mcp` command).
 
 ---
 
-## Part D — Validate inference
+## Part D — Validate the Caido proxy & UI (in-container)
+
+> The container starts a headless Caido instance as the web-proxy sidecar. Every proxy-aware client
+> (Chromium via Playwright, `curl`, `wget`, Python `requests`, ProjectDiscovery tools) routes through
+> it; the operator inspects captured traffic in the host browser at http://localhost:5000.
+
+### D1. Launch the container + Caido readiness
+
+```bash
+./scripts/pi-glider ~/engagements/acme
+```
+
+The entrypoint should emit, before the Pi TUI starts:
+
+```
+[entrypoint] Caido up — UI: http://localhost:5000 | proxy: http://127.0.0.1:8080 (data: /engagement/.caido)
+[entrypoint] proxy configured — http(s)_proxy/ALL_PROXY → http://127.0.0.1:8080; NO_PROXY=...
+```
+
+Also expect a line from `caido-init.js`: `caido-init: project "engagement" (<id>) selected` — this
+is what gives captured traffic a home.
+
+### D2. Operator UI is reachable from the host
+
+```bash
+curl -sS -o /dev/null -w '%{http_code} %{content_type}\n' http://localhost:5000/
+```
+
+Expect `200 text/html` (the Caido UI is being served, not proxied). Open
+http://localhost:5000 in your host browser and log in / view the guest session.
+
+### D3. HTTP proxying + capture
+
+From inside the running container:
+
+```bash
+docker exec <container-id> curl -sS -o /dev/null -w '%{http_code}\n' http://example.com/
+```
+
+Expect `200`, and **the request appears in the Caido UI** (Proxy → HTTP history). The system-wide
+`http_proxy` is what routes this through Caido — no explicit `-x` flag needed.
+
+### D4. HTTPS interception is trusted (no `-k`)
+
+```bash
+docker exec <container-id> curl -sS -o /dev/null -w '%{http_code}\n' https://example.com/
+```
+
+Expect `200` with **no** certificate error — the baked EC (P-256) CA is trusted via
+`REQUESTS_CA_BUNDLE`/`SSL_CERT_FILE`/`NODE_EXTRA_CA_CERTS`, and the request appears in Caido.
+
+### D5. Playwright Chromium routes through Caido (proxy env)
+
+```bash
+docker exec -e CAIDO_CHROMIUM_ARGS="$CAIDO_CHROMIUM_ARGS" <container-id> \
+  node -e '
+    const { chromium } = require("playwright");
+    (async () => {
+      const b = await chromium.launch({ args: (process.env.CAIDO_CHROMIUM_ARGS||"").split(" ").filter(Boolean) });
+      const p = await b.newPage();
+      await p.goto("http://example.com/");
+      console.log("title:", await p.title());
+      await b.close();
+    })();
+  '
+```
+
+Expect the page title to print, and the request to show up in Caido (filter for
+`example.com` in the UI). This confirms the headless browser's traffic is captured.
+
+---
+
+## Part E — Validate inference
 
 > Confirmed working (this environment): model `qwen/qwen3.8-27b` via `http://host.docker.internal:1234/v1`
 > (host LM Link → desktop). The desktop is also reachable directly at `http://192.168.1.158:1234/v1`.
 
-### D1. Confirm the inference server is up
+### E1. Confirm the inference server is up
 
 From the host, check the OpenAI-compatible endpoint:
 
@@ -159,7 +234,7 @@ curl -s http://<LAN-IP>:1234/v1/models        # or your LAN inference server
 Expect a JSON list of models. If empty/refused, start LM Studio (Local Server enabled) or your
 LAN server first.
 
-### D2. Confirm reachability from inside the container
+### E2. Confirm reachability from inside the container
 
 ```bash
 docker run --rm --entrypoint bash pi-glider:latest \
@@ -168,125 +243,23 @@ docker run --rm --entrypoint bash pi-glider:latest \
 
 Expect `200`. (For a LAN server, curl the LAN IP directly — the bridge network reaches LAN hosts.)
 
-### D3. Non-interactive inference test
+### E3. Non-interactive inference test
 
 ```bash
-docker run --rm -v ~/engagements/acme/.pi:/root/.pi/agent --entrypoint bash pi-glider:latest -c \
+docker run --rm -v ~/engagements/acme/.pi:/engagement/.pi --entrypoint bash pi-glider:latest -c \
   'pi -p "Reply with exactly: OK" --model lmstudio/qwen/qwen3.8-27b --no-session'
 ```
 
 Substitute the model id with one from `pi --list-models` (the `--model` value is `provider/model-id`).
 Expect the model to reply (e.g. `OK`). This proves end-to-end inference through the container.
 
-### D4. Interactive test (optional)
+### E4. Interactive test (optional)
 
 ```bash
 ./scripts/pi-glider ~/engagements/acme
 ```
 
 Attach to the TUI, select the model, and send a prompt. Confirm a response.
-
----
-
-## Part E — Validate Burp MCP
-
-### E1. Confirm the Burp MCP server is running
-
-In Burp: load the **MCP Server** extension (BAppStore), note its URL. Default:
-
-```
-http://127.0.0.1:9876
-```
-
-Verify from the host:
-
-```bash
-curl -s -m 3 -N http://127.0.0.1:9876/ | head -3
-```
-
-Expect an SSE stream beginning with `event: endpoint` (the MCP handshake).
-
-### E2. Start the Host-rewriting bridge
-
-Burp's MCP server rejects non-localhost `Host` headers (hardcoded DNS-rebinding protection in
-`KtorServerManager.kt`: only `localhost`/`127.0.0.1` are allowed for `Host`/`Origin`/`Referer`).
-Changing Burp's listen address to `0.0.0.0:9876` does **not** help — the guard checks the `Host`
-header value, not the bind interface. The container reaches the host via `host.docker.internal`,
-which Burp rejects with `403`.
-
-Run the bridge on the host:
-
-```bash
-python3 scripts/burp-mcp-bridge.py
-```
-
-It listens on `0.0.0.0:9877` and forwards to `127.0.0.1:9876`, rewriting the `Host` header to
-`127.0.0.1:9876` on **every** request (not just the first), so HTTP keep-alive connections work.
-The MCP SSE flow is: `GET /` returns `event: endpoint` with a `sessionId`, then each `POST /?sessionId=…`
-carries that id as a query param. The bridge rewrites the `Host` on all of those POSTs.
-
-### E3. Verify the bridge from the container
-
-```bash
-docker run --rm --add-host=host.docker.internal:host-gateway --entrypoint bash pi-glider:latest \
-  -c 'curl -s -m 3 -N -i http://host.docker.internal:9877/ | head -12'
-```
-
-Expect `HTTP/1.1 200` with `Content-Type: text/event-stream` (the MCP handshake).
-
-### E3b. Verify the full POST flow (handshake + tool list)
-
-The GET alone is not enough — Burp rejects POSTs aggressively, and the bridge must rewrite `Host`
-on the follow-up POSTs too. Confirm the full SSE session works end-to-end with the MCP SDK:
-
-```bash
-docker run --rm --add-host=host.docker.internal:host-gateway \
-  --entrypoint bash pi-glider:latest -c '
-  node --input-type=module -e "
-    const SDK = \"/usr/local/lib/node_modules/pi-mcp-extension/node_modules/@modelcontextprotocol/sdk/dist/cjs\";
-    const { Client } = await import(SDK + \"/client/index.js\");
-    const { SSEClientTransport } = await import(SDK + \"/client/sse.js\");
-    const c = new Client({ name: \"t\", version: \"1\" });
-    await c.connect(new SSEClientTransport(new URL(\"http://host.docker.internal:9877\")));
-    const tools = await c.listTools();
-    console.log(\"TOOLS:\", tools.tools.map(t => t.name).join(\", \"));
-    await c.close();
-  "
-'
-```
-
-Expect a list of `mcp_burp_*` tools (e.g. `get_proxy_http_history`, `send_http1_request`, …).
-This proves the bridge rewrites `Host` on the keep-alive POSTs, not just the initial GET.
-
-### E4. Point mcp.json at the bridge
-
-```bash
-$EDITOR ~/engagements/acme/.pi/mcp.json
-```
-
-Set `mcpServers.burp.url` to `http://host.docker.internal:9877`. (On Linux you can instead use
-`--network=host` and point directly at `http://127.0.0.1:9876`.) Edit the per-engagement
-`.pi/mcp.json` — that is what the container mounts. If you already set it in A6 before seeding,
-this should already be correct.
-
-### E5. Confirm the MCP server connects (interactive)
-
-```bash
-./scripts/pi-glider ~/engagements/acme
-```
-
-In the Pi TUI:
-
-```
-/mcp          # status summary — expect `burp` listed
-/mcp burp     # detail + stderr log for burp
-/mcp:start burp   # force a connection if lifecycle is lazy
-```
-
-### E6. Exercise a Burp tool
-
-With inference working, ask the agent to use a Burp MCP tool (e.g. "list the proxy history via
-Burp"). Tools appear as `mcp_burp_*`. Confirm the tool returns real data.
 
 ---
 
@@ -298,19 +271,20 @@ Burp"). Tools appear as `mcp_burp_*`. Confirm the tool returns real data.
 ./scripts/pi-glider ~/engagements/acme
 ```
 
-The CLI seeds `<engagement>/.pi/` (if needed), starts the Burp bridge (container mode), and mounts
-`<engagement>/.pi` → `/root/.pi/agent` and the engagement dir → `/engagement`.
+The CLI seeds `<engagement>/.pi/` (if needed), starts the in-container Caido proxy + UI, and mounts
+the engagement dir → `/engagement` (the agentDir lives at `/engagement/.pi`).
 
 ### F2. Verify mounts + sessions
 
 From inside a session (or a shell):
 
 ```bash
-docker run --rm --entrypoint bash pi-glider:latest -c 'ls -la /engagement /root/.pi/agent'
+docker run --rm --entrypoint bash pi-glider:latest -c 'ls -la /engagement /engagement/.pi'
 ```
 
-Expect `/engagement` to contain `RoE.md` and `/root/.pi/agent` to contain your config + skills.
-After a session, confirm Pi session files land in `~/engagements/<name>/.pi/sessions/`.
+Expect `/engagement` to contain `RoE.md` (plus `recon/`, `evidence/`, `notes/`) and
+`/engagement/.pi` to contain your config + skills. After a session, confirm Pi session files land
+in `~/engagements/<name>/.pi/sessions/`.
 
 ---
 
@@ -319,8 +293,8 @@ After a session, confirm Pi session files land in `~/engagements/<name>/.pi/sess
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
 | `pi --list-models` empty | wrong `baseUrl`/`apiKey` in `models.json` | fix `baseUrl`; keyless servers need a dummy `apiKey` |
-| inference `pi -p` hangs | server not reachable from container | verify D2; use `host.docker.internal` (host) or LAN IP |
-| Burp MCP `403` | Host-header validation (DNS-rebinding) | run the bridge (E2) |
-| Burp MCP `/mcp` shows disconnected | `lifecycle: lazy` (not yet used) | `/mcp:start burp`, or use a Burp tool |
+| inference `pi -p` hangs | server not reachable from container | verify E2; use `host.docker.internal` (host) or LAN IP |
+| Caido UI not reachable at `localhost:5000` | Caido not ready / wrong port | check `/var/log/caido.log` in the container; verify `CAIDO_UI_PORT` |
+| proxy returns 200 but nothing in Caido | project not selected | confirm `caido-init: project "engagement" selected`; re-run `node /usr/local/bin/caido-init.js` |
+| HTTPS proxying fails with cert error | CA not trusted in-container | confirm `SSL_CERT_FILE`/`REQUESTS_CA_BUNDLE` → `/etc/ssl/certs/ca-certificates.crt` |
 | tools `MISSING` | image rebuilt before tool list change | rebuild (B1) |
-| extension missing after teardown | installed at runtime (not baked in) | add to Dockerfile + `config/settings.json` `packages`, rebuild |

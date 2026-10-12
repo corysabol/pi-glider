@@ -12,7 +12,6 @@ skills/
 ├── recon/       recon techniques: subdomain, port, HTTP, crawl, fingerprint, JS, cloud, DNS
 ├── testing/     active testing: nuclei, fuzzing, auth, injection, misconfig
 ├── tools/       per-tool reference (subfinder, naabu, httpx, katana, nuclei, dnsx, …)
-├── mcp/         Burp/Caido MCP integration patterns
 └── workflows/   operator-defined reusable multi-step workflows
 ```
 

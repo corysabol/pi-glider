@@ -5,13 +5,10 @@ services:
     stdin_open: true
     tty: true
     environment:
-      - PI_CODING_AGENT_DIR=/root/.pi/agent
+      - PI_CODING_AGENT_DIR=/engagement/.pi
     volumes:
-      # Engagement-local agentDir (config + skills + extensions + sessions) → container agentDir.
-      # Seed it first with `pi-glider <dir>` (or `scripts/pi-glider`), or copy the global agentDir
-      # into <engagement>/.pi manually.
-      - ${ENGAGEMENT_DIR}/.pi:/root/.pi/agent
-      # Engagement dir → /engagement (working dir + evidence)
+      # Engagement dir → /engagement (working dir + evidence + .pi agentDir). The per-engagement
+      # agentDir lives at <engagement>/.pi; seed it first with `pi-glider init <dir>`.
       - ${ENGAGEMENT_DIR}:/engagement
     # Bridge network (default). Host services reachable via host.docker.internal.
     # On macOS, host.docker.internal is resolved automatically. The extra_hosts entry
@@ -20,3 +17,8 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     working_dir: /engagement
+    ports:
+      # Caido UI/API (operator web browser) + Caido HTTP(S) proxy.
+      # Container-side ports are fixed (5000/8080, see Dockerfile ENV); map host ports via .env.
+      - "${CAIDO_UI_PORT:-5000}:5000"
+      - "${CAIDO_PROXY_PORT:-8080}:8080"

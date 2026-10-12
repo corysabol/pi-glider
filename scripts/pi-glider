@@ -5,6 +5,7 @@ set -euo pipefail
 #
 # Usage:
 #   pi-glider install [--force]       seed the global agentDir (~/.config/pi-glider)
+#   pi-glider init [dir]              initialize an engagement dir (subdirs + RoE + .pi agentDir)
 #   pi-glider self-install             symlink this CLI into ~/.local/bin (put it on PATH)
 #   pi-glider [dir]                   launch in the Kali container (default)
 #   pi-glider --no-container [dir]    launch on the host (no container)
@@ -16,8 +17,8 @@ set -euo pipefail
 # Environment:
 #   PI_GLIDER_CONFIG   global agentDir (default ~/.config/pi-glider)
 #   PI_GLIDER_IMAGE    container image (default pi-glider:latest)
-#   PI_GLIDER_BRIDGE   set to 0 to skip auto-starting the Burp MCP bridge (container mode only)
-#   PI_GLIDER_BRIDGE_LOG  bridge log file
+#   PI_GLIDER_CAIDO_UI_PORT     host port for the in-container Caido UI/API (default 5000)
+#   PI_GLIDER_CAIDO_PROXY_PORT  host port for the in-container Caido proxy (default 8080)
 #   PI_GLIDER_BIN_DIR   install dir for `self-install` (default ~/.local/bin)
 
 # Resolve the script's real location (follow symlinks) so the CLI works when installed to PATH.
@@ -31,7 +32,6 @@ SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 CONFIG_DIR="${PI_GLIDER_CONFIG:-$HOME/.config/pi-glider}"
 IMAGE="${PI_GLIDER_IMAGE:-pi-glider:latest}"
-BRIDGE_LOG="${PI_GLIDER_BRIDGE_LOG:-$CONFIG_DIR/bridge.log}"
 
 # Resolve an engagement dir to an absolute path (defaults to the current directory).
 resolve_dir() {
@@ -55,32 +55,44 @@ seed_engagement() {
   done
 }
 
-# Start the Burp MCP bridge (container mode) and arrange cleanup. Burp's MCP server rejects
-# non-localhost Host headers, so the container reaches it through a Host-rewriting bridge.
-start_bridge() {
-  if [ "${PI_GLIDER_BRIDGE:-1}" != "1" ] || pgrep -f "burp-mcp-bridge.py" >/dev/null 2>&1; then
-    return
+# Initialize an engagement directory: create the working subdirs, drop in an RoE.md template,
+# and seed the per-engagement `.pi/` agentDir from the global agentDir. Mirrors what the
+# `engagement-setup` skill instructs the agent to do. Safe to re-run (never clobbers RoE.md or
+# an existing `.pi/`).
+init_engagement() {
+  local dir
+  dir="$(resolve_dir "${1:-}")"
+  mkdir -p "$dir"
+  echo "[pi-glider] initializing engagement: $dir"
+
+  # Working subdirectories (recon / evidence / notes). Sessions live under .pi/sessions.
+  for d in recon evidence notes; do
+    mkdir -p "$dir/$d"
+  done
+
+  # RoE.md template (never clobber an existing one).
+  if [ -f "$dir/RoE.md" ]; then
+    echo "  skip RoE.md (exists)"
+  elif [ -f "$REPO_ROOT/templates/engagement/RoE.md" ]; then
+    cp "$REPO_ROOT/templates/engagement/RoE.md" "$dir/RoE.md"
+    echo "  write RoE.md (template — fill it in before running)"
   fi
-  python3 "$REPO_ROOT/scripts/burp-mcp-bridge.py" >>"$BRIDGE_LOG" 2>&1 &
-  local pid=$!
-  sleep 0.5
-  if kill -0 "$pid" 2>/dev/null; then
-    echo "[pi-glider] started burp-mcp-bridge (pid $pid, log $BRIDGE_LOG)"
-    trap 'kill "$pid" 2>/dev/null || true' EXIT
-  else
-    echo "[pi-glider] WARNING: burp-mcp-bridge failed to start; see $BRIDGE_LOG" >&2
-  fi
+
+  # Per-engagement agentDir (.pi/) from the global agentDir.
+  seed_engagement "$dir"
+
+  echo "[pi-glider] done. Edit $dir/RoE.md, then run: pi-glider $dir"
 }
 
 launch_container() {
   local dir
   dir="$(resolve_dir "${1:-}")"
   seed_engagement "$dir"
-  start_bridge
   docker run --rm -it \
-    -e PI_CODING_AGENT_DIR=/root/.pi/agent \
-    -v "$dir/.pi:/root/.pi/agent" \
+    -e PI_CODING_AGENT_DIR=/engagement/.pi \
     -v "$dir:/engagement" \
+    -p "${PI_GLIDER_CAIDO_UI_PORT:-5000}:5000" \
+    -p "${PI_GLIDER_CAIDO_PROXY_PORT:-8080}:8080" \
     --add-host=host.docker.internal:host-gateway \
     "$IMAGE"
 }
@@ -110,6 +122,10 @@ case "${1:-}" in
   install)
     shift
     exec bash "$REPO_ROOT/scripts/install.sh" "$@"
+    ;;
+  init)
+    shift
+    init_engagement "${1:-}"
     ;;
   self-install)
     install_self

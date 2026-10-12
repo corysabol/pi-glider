@@ -24,7 +24,7 @@ Map the live web attack surface for in-scope hosts.
    katana -list /engagement/recon/live.example.com.txt -o /engagement/recon/crawl.example.com.txt
    ```
 
-4. Use the Burp MCP tools for deeper inspection of specific endpoints when needed.
+4. Inspect captured traffic in Caido (see `tools-caido`) for deeper inspection of specific endpoints when needed.
 
 ## Output
 

@@ -17,7 +17,7 @@ Crawl in-scope web apps and extract JavaScript files and endpoints.
    ```
 
 2. Extract endpoints/URLs from JS; look for API keys, secrets, and hidden endpoints.
-3. Feed interesting endpoints to the Burp MCP tools for deeper inspection.
+3. Inspect interesting endpoints in Caido (see `tools-caido`) for deeper inspection.
 
 ## Output
 

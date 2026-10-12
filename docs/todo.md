@@ -45,3 +45,32 @@ Keep it minimal and razor-sharp (it is injected every turn).
 a real package/installer (e.g. Homebrew tap, npm package, or a single-file installer) so users can
 install pi-glider without cloning the repo. Decide the distribution story and document it in the
 README.
+
+## Build version pinning (deferred follow-up #4)
+Pi, Node, and Playwright currently install at "latest" at image build time, which keeps the image
+current but makes builds non-reproducible:
+- **Node** is resolved at build time from https://nodejs.org/dist/index.json (newest release).
+- **Pi** (`@earendil-works/pi-coding-agent`) installs `latest`.
+- **Playwright** (`playwright@latest`) installs `latest`.
+
+Plan: parameterize each with a build `ARG` defaulting to `latest`, and pin Node+Pi+Playwright as a
+*single* compatibility surface (they version-bump together — e.g. Pi 0.75+ required Node >= 22.19.0,
+and Playwright needs a matching Node). Enable test builds with
+`docker build --build-arg PLAYWRIGHT_VERSION=1.x.y -t pi-glider:X.Y.Z container/`.
+
+Caveats to handle while pinning:
+- **Playwright ↔ Node coupling** — the CLI and the downloaded Chromium build must stay matched; a
+  version bump re-downloads the ~450MB browser, so keep the two Playwright `RUN` lines (npm install
+  + `npx playwright install chromium`) adjacent/atomic so a pin applies to both.
+- **Baked CA is static** — the EC CA generated at build time is independent of these versions; it
+  doesn't need pinning, but rebuilding with a new CA invalidates any operator-imported copies of
+  the old root.
+
+## MCP migration to native Pi MCP (done: removed pi-mcp-extension + Burp)
+- Pi agent v1.0+ ships **native MCP** (built-in `/mcp` command), which collides with the old
+  `pi-mcp-extension` slash command.
+- Removed `pi-mcp-extension` (`pi install` in Dockerfile, `config/settings.json` `packages`,
+  `config/mcp.json` settings/toolPrefix) and the **Burp MCP** server + host-side bridge
+  (`scripts/burp-mcp-bridge.py`, `skills/mcp/mcp-burp/`).
+- Future MCP integrations should use Pi's built-in `/mcp`; the native config schema is TBD (don't
+  guess it). The in-container **Caido** proxy remains the capture point for web traffic.

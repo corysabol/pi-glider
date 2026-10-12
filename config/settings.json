@@ -1,7 +1,4 @@
 {
   "enableInstallTelemetry": false,
-  "skills": [],
-  "packages": [
-    "npm:pi-mcp-extension"
-  ]
+  "skills": []
 }

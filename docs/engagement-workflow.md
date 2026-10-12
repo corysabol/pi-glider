@@ -2,8 +2,9 @@
 
 ## Lifecycle
 
-1. **Create the engagement dir.** `mkdir -p ~/engagements/<name>/` and copy the RoE template:
-   `cp templates/engagement/RoE.md ~/engagements/<name>/RoE.md`. Fill it in.
+1. **Initialize the engagement dir.** `pi-glider init ~/engagements/<name>/` (or `scripts/pi-glider
+   init ~/engagements/<name>/`) — creates `recon/`, `evidence/`, `notes/`, a `RoE.md` template, and
+   seeds the per-engagement `.pi/` agentDir. Fill in `RoE.md`.
 2. **Launch the agent** with the CLI, which seeds a per-engagement `.pi/` agentDir (from the global
    `~/.config/pi-glider/`) and then runs Pi:
    - Container (default): `scripts/pi-glider ~/engagements/<name>`
