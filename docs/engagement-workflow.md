@@ -9,8 +9,7 @@
    `~/.config/pi-glider/`) and then runs Pi:
    - Container (default): `scripts/pi-glider ~/engagements/<name>`
    - Host: `scripts/pi-glider --no-container ~/engagements/<name>`
-3. **Connect.** The agent connects to the configured inference API (`models.json`) and any MCPs
-   (`mcp.json`).
+3. **Connect.** The agent connects to the configured inference API (`models.json`).
 4. **Operate.** Attach to the Pi session and request tasks / trigger skills. The agent follows a
    phased methodology (see below): orient → recon → plan → confirm → test → document.
 5. **Accumulate.** Working files (discovered IPs, hosts, recon output) and Pi session history
@@ -27,8 +26,8 @@
 ├── evidence/       # screenshots, findings, artifacts
 ├── notes/          # working notes
 └── .pi/            # per-engagement agentDir (seeded once from ~/.config/pi-glider/)
-    ├── models.json / mcp.json / settings.json
-    ├── APPEND_SYSTEM.md / methodology-tips.md / context-inject.json
+    ├── models.json / settings.json
+    ├── APPEND_SYSTEM.md / methodology-tips.md / context-inject.json / skills-index.md
     ├── skills/  extensions/
     └── sessions/   # Pi session history
 ```

@@ -9,8 +9,8 @@ architecture, the configuration model, and the networking model.
 ```
 Operator host
 ├── ~/.config/pi-glider/            # global template dir (seeded by scripts/install.sh)
-│     ├── models.json / mcp.json / settings.json
-│     ├── APPEND_SYSTEM.md / methodology-tips.md / context-inject.json
+│     ├── models.json / settings.json
+│     ├── APPEND_SYSTEM.md / methodology-tips.md / context-inject.json / skills-index.md
 │     └── skills/  extensions/  prompts/
 ├── ~/engagements/<name>/           # per-engagement dir
 │     ├── RoE.md                    # source of truth: scope, RoE, targets, goals
@@ -18,8 +18,8 @@ Operator host
 │     ├── evidence/                 # screenshots, findings, artifacts
 │     ├── notes/                    # working notes
 │     └── .pi/                      # per-engagement agentDir (seeded once from the global dir)
-│           ├── models.json / mcp.json / settings.json
-│           ├── APPEND_SYSTEM.md / methodology-tips.md / context-inject.json
+│           ├── models.json / settings.json
+│           ├── APPEND_SYSTEM.md / methodology-tips.md / context-inject.json / skills-index.md
 │           ├── skills/  extensions/
 │           └── sessions/           # Pi session history
 └── LAN inference server
@@ -74,14 +74,14 @@ back to the global dir to reuse them later.
 ```
 ~/.config/pi-glider/          (global template dir)
 ├── models.json        # inference providers/models (LAN server, LM Studio, etc.)
-├── settings.json      # Pi settings (skill paths, tool prefs; sandbox disabled)
-├── mcp.json           # MCP servers (reserved — Pi native /mcp going forward)
+├── settings.json      # Pi settings (skill paths, tool prefs)
 ├── APPEND_SYSTEM.md   # appended system prompt (injected every turn)
 ├── methodology-tips.md # operator-editable general testing heuristics
 ├── context-inject.json # ctx-injector onStart/onCompact file lists
+├── skills-index.md    # intent → skill routing index (injected at session start)
 ├── skills/            # skills (core/ operating manuals + recon/testing/tools/workflows)
 ├── prompts/           # prompt templates (optional, operator-defined)
-└── extensions/        # extensions (pi-glider-banner, pi-ctx-injector)
+└── extensions/        # extensions (pi-glider-banner, pi-ctx-injector, pi-caido, pi-playwright)
 ```
 
 The repo is the canonical/versioned source of truth; `scripts/install.sh` seeds the global dir from
@@ -91,7 +91,7 @@ The repo is the canonical/versioned source of truth; `scripts/install.sh` seeds 
 
 Pi agent v1.0+ ships **native MCP** (a built-in `/mcp` command). pi-glider no longer bundles
 `pi-mcp-extension` (its slash command collided with Pi's native `/mcp`) and no longer ships a
-default MCP server — `config/mcp.json` is an empty placeholder (`{ "mcpServers": {} }`).
+default MCP server.
 
 The native MCP configuration schema is not yet wired; when it is, operators will register MCP
 servers through Pi's built-in `/mcp` command rather than an extension. In the meantime, the

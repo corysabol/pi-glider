@@ -42,4 +42,4 @@ echo "  sync  skills/"
 cp -R "$REPO_ROOT/extensions/." "$TARGET/extensions/"
 echo "  sync  extensions/"
 
-echo "[pi-glider] done. Edit $TARGET/models.json and $TARGET/mcp.json before first run."
+echo "[pi-glider] done. Edit $TARGET/models.json before first run."
