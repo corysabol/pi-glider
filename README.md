@@ -191,18 +191,34 @@ replacement) alternative.
 ## Caido proxy & UI (in-container)
 
 The container runs a headless [Caido](https://caido.io) instance as a web-proxy sidecar. Every
-proxy-aware client — in-container Chromium (via Playwright), `curl`, `wget`, Python `requests`, the
-ProjectDiscovery tools, and the Pi agent itself — is routed through it via `http_proxy`/
-`https_proxy`/`ALL_PROXY` (exported in `container/entrypoint.sh`), so all web traffic is captured
-in one place.
+proxy-aware client — in-container Chromium (via Playwright), `curl`, `wget`, Python `requests`, and
+the ProjectDiscovery tools — is routed through it via `http_proxy`/`https_proxy`/`ALL_PROXY`
+(exported in `container/entrypoint.sh`), so all captured web traffic lands in one place.
+
+**LLM inference traffic bypasses Caido.** The model endpoint(s) from `models.json` are
+automatically added to `NO_PROXY` at startup, so inference responses stream directly (MITM'ing
+streaming responses through Caido truncates them). Override/extend with `CAIDO_NO_PROXY` if needed.
 
 - **Proxy** — `http://127.0.0.1:8080` inside the container (published to host `8080`).
 - **UI/API** — `http://host.docker.internal:5000` (published to host `5000`); open
   http://localhost:5000 in your host browser to inspect captured requests.
 
-A static EC (P-256) CA is baked into the image and imported into both Caido and the system trust
-store, so HTTPS interception is trusted by the in-container tools without `-k`. The project is
-created and selected at startup (`container/caido-init.js`), so captured traffic has a home.
+A static EC (P-256) MITM CA is generated on first run and persisted under `<engagement>/.caido/certs/`
+so it survives image rebuilds; it is installed into the system trust store at runtime and imported
+into Caido, so HTTPS interception is trusted by the in-container tools without `-k`.
+
+### Project persistence
+
+The Caido data directory lives at `<engagement>/.caido/`, so captured traffic survives container
+teardowns and image rebuilds. However, **Caido does not save projects in guest mode** — the
+container auto-bootstraps a *temporary* guest project (via `container/caido-init.js`) so the proxy
+has somewhere to record, but temporary projects are not resumed on relaunch.
+
+To persist and resume a project across sessions, connect your Caido client (the web UI at
+http://localhost:5000, or Caido Desktop pointed at that host/port) and **log in with a Caido
+account** (free saves 2 projects; Pro lifts the limits) instead of "Continue as guest". Create or
+select your saved project in the UI — that is the one that persists. Credentials are entered
+interactively, so nothing is seeded into the image.
 
 See [`docs/smoke-test.md`](docs/smoke-test.md) Part D for validation steps.
 

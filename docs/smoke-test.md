@@ -193,8 +193,9 @@ Expect `200`, and **the request appears in the Caido UI** (Proxy → HTTP histor
 docker exec <container-id> curl -sS -o /dev/null -w '%{http_code}\n' https://example.com/
 ```
 
-Expect `200` with **no** certificate error — the baked EC (P-256) CA is trusted via
-`REQUESTS_CA_BUNDLE`/`SSL_CERT_FILE`/`NODE_EXTRA_CA_CERTS`, and the request appears in Caido.
+Expect `200` with **no** certificate error — the persisted EC (P-256) CA (generated on first
+run under `<engagement>/.caido/certs/`) is trusted via `REQUESTS_CA_BUNDLE`/`SSL_CERT_FILE`/
+`NODE_EXTRA_CA_CERTS`, and the request appears in Caido.
 
 ### D5. Playwright Chromium routes through Caido (proxy env)
 
@@ -221,6 +222,10 @@ Expect the page title to print, and the request to show up in Caido (filter for
 
 > Confirmed working (this environment): model `qwen/qwen3.8-27b` via `http://host.docker.internal:1234/v1`
 > (host LM Link → desktop). The desktop is also reachable directly at `http://192.168.1.158:1234/v1`.
+>
+> Inference traffic bypasses Caido: the model `baseUrl` host(s) are auto-added to `NO_PROXY` at
+> startup (see the `[entrypoint] inference host(s) bypass proxy:` log line). Streaming responses
+> through the MITM proxy truncate, so confirm inference does **not** appear in Caido's capture.
 
 ### E1. Confirm the inference server is up
 

@@ -4,3 +4,4 @@
 /evidence/
 /sessions/       # legacy location (pre-.pi agentDir)
 /.pi/            # per-engagement agentDir (seeded from global; may contain secrets)
+/.caido/         # Caido engine state (project DB, captured traffic, MITM CA) — engine-managed

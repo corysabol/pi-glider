@@ -78,20 +78,10 @@ RUN ARCH=$(uname -m) && \
     rm caido-cli.tar.gz && \
     mv caido-cli /usr/local/bin/
 
-# Static CA used for Caido's MITM interception. Baked into the image so Caido
-# (--import-ca-cert) and the container's system trust store agree on the SAME root,
-# letting curl/python/ProjectDiscovery tools decrypt HTTPS through the proxy without
-# `-k`. Playwright Chromium still passes --ignore-certificate-errors as a safety net
-# (see $CAIDO_CHROMIUM_ARGS).
-RUN mkdir -p /app/certs && \
-    openssl req -x509 -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 \
-      -nodes -sha256 \
-      -keyout /app/certs/ca.key -out /app/certs/ca.crt \
-      -days 3650 -subj "/CN=pi-glider Caido CA" && \
-    openssl pkcs12 -export -out /app/certs/ca.p12 \
-      -inkey /app/certs/ca.key -in /app/certs/ca.crt -passout pass: && \
-    cp /app/certs/ca.crt /usr/local/share/ca-certificates/pi-glider-caido.crt && \
-    update-ca-certificates --fresh
+# Caido's MITM CA is NOT baked into the image. It is generated on first run by
+# entrypoint.sh and persisted under $CAIDO_DATA/certs (the engagement's .caido dir) so
+# it survives image rebuilds and container teardowns. The system trust store is updated
+# at runtime from that persisted CA.
 
 
 # Caido web-proxy sidecar (started by entrypoint.sh) — single capture point for all
@@ -103,12 +93,10 @@ ENV CAIDO_DATA=/engagement/.caido \
     CAIDO_API_URL=http://127.0.0.1:5000 \
     CAIDO_PROJECT_NAME=engagement \
     CAIDO_PROXY_URL=http://127.0.0.1:8080 \
-    CAIDO_CA_P12=/app/certs/ca.p12 \
     CAIDO_CERT_PASS="" \
     CAIDO_NO_PROXY=localhost,127.0.0.1,host.docker.internal,registry.npmjs.org \
     REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt \
     SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt \
-    NODE_EXTRA_CA_CERTS=/app/certs/ca.crt \
     CAIDO_CHROMIUM_ARGS="--proxy-server=http://127.0.0.1:8080 --ignore-certificate-errors --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage"
 
 WORKDIR /engagement

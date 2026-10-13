@@ -112,6 +112,8 @@ Consequences (container mode):
 
 - `models.json` `baseUrl` for LM Studio on the host: `http://host.docker.internal:1234/v1`
   (or the LAN IP of the inference desktop).
+- **Inference bypasses Caido** — the `baseUrl` host(s) are auto-added to `NO_PROXY` at startup
+  (streaming responses are unreliable through the MITM proxy). Extend via `CAIDO_NO_PROXY`.
 - Caido UI/API is reached at `http://localhost:5000` from the host browser.
 
 **Host mode (`--no-container`)** runs Pi directly on the host with no container and no in-container

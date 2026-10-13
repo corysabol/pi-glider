@@ -62,9 +62,9 @@ Caveats to handle while pinning:
 - **Playwright ↔ Node coupling** — the CLI and the downloaded Chromium build must stay matched; a
   version bump re-downloads the ~450MB browser, so keep the two Playwright `RUN` lines (npm install
   + `npx playwright install chromium`) adjacent/atomic so a pin applies to both.
-- **Baked CA is static** — the EC CA generated at build time is independent of these versions; it
-  doesn't need pinning, but rebuilding with a new CA invalidates any operator-imported copies of
-  the old root.
+- **CA is persisted per-engagement** — the MITM CA is generated on first run under
+  `<engagement>/.caido/certs/` (not baked at build), so version pinning/rebuilds don't invalidate it
+  or any operator-imported copy of the root.
 
 ## MCP migration to native Pi MCP (done: removed pi-mcp-extension + Burp)
 - Pi agent v1.0+ ships **native MCP** (built-in `/mcp` command), which collides with the old
@@ -74,3 +74,12 @@ Caveats to handle while pinning:
   (`scripts/burp-mcp-bridge.py`, `skills/mcp/mcp-burp/`).
 - Future MCP integrations should use Pi's built-in `/mcp`; the native config schema is TBD (don't
   guess it). The in-container **Caido** proxy remains the capture point for web traffic.
+
+## Caido project persistence (documented; credentials deferred)
+- Caido data lives under `<engagement>/.caido/` (persists); the MITM CA is generated on first run
+  under `.caido/certs/` (persists).
+- **Caveat:** Caido does not save projects in guest mode — the auto-bootstrapped project is
+  temporary/disposable. To persist+resume, the operator logs in with a Caido account (free = 2
+  projects; Pro lifts limits) via the UI instead of "Continue as guest". Documented in README.
+- **Future phase:** optionally support seeded credentials (Caido account token / PAT) so the
+  in-container tooling can authenticate programmatically without the operator logging in manually.
