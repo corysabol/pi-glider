@@ -15,7 +15,7 @@ echo "[pi-glider] seeding agentDir: $TARGET"
 mkdir -p "$TARGET/skills" "$TARGET/prompts" "$TARGET/sessions" "$TARGET/extensions"
 
 # Config templates (don't clobber operator edits unless --force)
-for f in models.json settings.json APPEND_SYSTEM.md methodology-tips.md context-inject.json; do
+for f in models.json settings.json APPEND_SYSTEM.md methodology-tips.md context-inject.json skills-index.md; do
   if [ -f "$TARGET/$f" ] && [ "$FORCE" -ne 1 ]; then
     echo "  skip  $f (exists; use --force to overwrite)"
   else

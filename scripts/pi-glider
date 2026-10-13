@@ -47,7 +47,7 @@ seed_engagement() {
   fi
   echo "[pi-glider] seeding $pi_dir from $CONFIG_DIR"
   mkdir -p "$pi_dir/sessions"
-  for f in models.json settings.json APPEND_SYSTEM.md methodology-tips.md context-inject.json SYSTEM.md; do
+  for f in models.json settings.json APPEND_SYSTEM.md methodology-tips.md context-inject.json skills-index.md SYSTEM.md; do
     [ -f "$CONFIG_DIR/$f" ] && cp "$CONFIG_DIR/$f" "$pi_dir/$f"
   done
   for d in skills prompts extensions; do

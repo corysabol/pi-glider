@@ -1,4 +1,4 @@
 {
-  "onStart": ["methodology-tips.md"],
+  "onStart": ["skills-index.md", "methodology-tips.md"],
   "onCompact": ["skills/core/pi-glider/SKILL.md", "methodology-tips.md"]
 }

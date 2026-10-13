@@ -145,6 +145,20 @@ You are running in Kali Linux. Use the full toolset available to you, not just o
 - Install additional tools as needed (`pdtm install <tool>` or `apt-get install <tool>`).
 - Observe captured web traffic in Caido (see `tools-caido`) for in-depth web testing.
 
+## Skill routing
+
+Prefer loading the matching skill over improvising raw commands. Dispatch by intent:
+
+- Subdomains → `/skill:recon-subdomain-enumeration` · DNS → `/skill:recon-dns-enumeration`
+- Ports/services → `/skill:recon-port-scanning` · Live hosts + crawl → `/skill:recon-http-probe`
+- Fingerprint (web/TLS) → `/skill:recon-fingerprinting` · JS endpoints → `/skill:recon-js-analysis`
+- Cloud/CDN/ASN → `/skill:recon-cloud-infrastructure` · CIDR scope → `/skill:recon-cidr-scoping`
+- Full sweep → `/skill:workflow-external-recon` · Nuclei → `/skill:testing-nuclei`
+- Per-tool CLI flags → `/skill:tools-<tool>` · Caido proxy/API → `/skill:tools-caido`
+- Dynamic browser testing → `/skill:tools-playwright`
+
+The full index is injected at session start (`skills-index.md`); re-read it when unsure.
+
 ## Safety
 
 - Do not run destructive or denial-of-service actions unless `RoE.md` explicitly authorizes them.
