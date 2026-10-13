@@ -41,9 +41,25 @@ Caveat: Chromium bypasses the proxy for loopback (`http://127.0.0.1`, `http://lo
 targets by default. If the target app is served locally, add
 `--proxy-bypass-list=\<-loopback\>` to force loopback through Caido too.
 
-## GraphQL API (programmatic access)
+## Callable tools (preferred)
 
-Auth = guest token (instance runs with `--allow-guests`):
+The `pi-caido` extension registers callable Caido tools — use these instead of hand-writing
+GraphQL when you need to read or replay captured traffic:
+
+- `caido_list_requests` — list captured requests (optional HTTPQL filter, e.g.
+  `req.method.eq:"POST"` / `req.path.cont:"/api/"`).
+- `caido_get_request` — full decoded request (headers + body) by id (from `caido_list_requests`).
+- `caido_get_response` — decoded response (status + headers + body) by request id.
+- `caido_list_sitemap` — tree of discovered hosts/directories/requests.
+- `caido_view_sitemap_entry` — one sitemap entry + its recorded requests.
+
+These authenticate as a guest automatically; no token handling needed. Response bodies are
+truncated at 8KB (with a flag) — open the Caido UI for full data.
+
+## GraphQL API (raw)
+
+For anything the tools above don't cover, call the GraphQL endpoint directly. Auth = guest token
+(instance runs with `--allow-guests`):
 
 ```bash
 TOKEN=*** -s -X POST "$CAIDO_API_URL/graphql" -H 'Content-Type: application/json' \

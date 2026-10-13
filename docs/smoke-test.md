@@ -34,7 +34,7 @@ Expect the layout from `README.md`: `config/`, `skills/{core,recon,testing,tools
 ### A3. Config JSON is valid
 
 ```bash
-for f in config/models.json config/mcp.json config/settings.json config/context-inject.json; do
+for f in config/models.json config/settings.json config/context-inject.json; do
   python3 -c "import json;json.load(open('$f'))" && echo "OK  $f"
 done
 ```
@@ -59,9 +59,9 @@ Every skill's `name` must equal its folder name and have a non-empty `descriptio
 ls -la ~/.config/pi-glider/
 ```
 
-Expect `models.json`, `mcp.json`, `settings.json`, `APPEND_SYSTEM.md`, `methodology-tips.md`,
-`context-inject.json`, and populated `skills/` and `extensions/`. Re-run with `--force` to
-overwrite config files you've edited.
+Expect `models.json`, `settings.json`, `APPEND_SYSTEM.md`, `methodology-tips.md`,
+`context-inject.json`, `skills-index.md`, and populated `skills/` and `extensions/`. Re-run with
+`--force` to overwrite config files you've edited.
 
 ### A6. Point config at your environment
 
@@ -69,8 +69,8 @@ overwrite config files you've edited.
 $EDITOR ~/.config/pi-glider/models.json   # set baseUrl to your inference endpoint
 ```
 
-`config/mcp.json` is an empty placeholder (`{ "mcpServers": {} }`) — MCP is handled by Pi's native
-`/mcp` command going forward; there is no Burp/extension MCP to configure.
+MCP is handled by Pi's native `/mcp` command going forward — there is no `mcp.json` and no
+Burp/extension MCP to configure.
 
 ### A7. Seed a per-engagement agentDir + install the CLI
 
@@ -84,8 +84,9 @@ mkdir -p ~/engagements/acme/.pi/sessions
 ls -la ~/engagements/acme/.pi/
 ```
 
-Expect `.pi/` to contain `models.json`, `mcp.json`, `settings.json`, `APPEND_SYSTEM.md`,
-`methodology-tips.md`, `context-inject.json`, and `skills/`/`extensions/`/`sessions/`.
+Expect `.pi/` to contain `models.json`, `settings.json`, `APPEND_SYSTEM.md`,
+`methodology-tips.md`, `context-inject.json`, `skills-index.md`, and
+`skills/`/`extensions/`/`sessions/`.
 
 To put the CLI on your PATH:
 
@@ -215,6 +216,23 @@ docker exec -e CAIDO_CHROMIUM_ARGS="$CAIDO_CHROMIUM_ARGS" <container-id> \
 
 Expect the page title to print, and the request to show up in Caido (filter for
 `example.com` in the UI). This confirms the headless browser's traffic is captured.
+
+### D6. pi-caido tools are registered and read captured traffic
+
+The `pi-caido` extension registers model-callable Caido tools. From the running session (after
+D1's launch), generate a request and confirm the tools can read it:
+
+```bash
+# inside the container, generate traffic through the proxy
+docker exec <container-id> curl -sS -o /dev/null -x http://127.0.0.1:8080 http://example.com/
+
+# confirm the tool names are registered (appear in the startup "Extensions/tools" list),
+# then in the TUI ask the model: "list captured requests with caido_list_requests"
+```
+
+Expect the model to call `caido_list_requests` and report the `example.com` request (id, method,
+host, status) it proxied moments ago. `caido_get_request` / `caido_get_response` return the decoded
+raw body for a chosen id. This proves the agent can *read* (not just route through) Caido.
 
 ---
 

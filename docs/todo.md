@@ -75,6 +75,16 @@ Caveats to handle while pinning:
 - Future MCP integrations should use Pi's built-in `/mcp`; the native config schema is TBD (don't
   guess it). The in-container **Caido** proxy remains the capture point for web traffic.
 
+## Agent integration — in progress (see docs/agent-integration-plan.md)
+- **Done:** skills index + routing (Thread 1); `extensions/pi-caido` P0 read-only tools
+  (Thread 2 — list/get request, get response, list/view sitemap; GraphQL validated vs Caido 0.56).
+- **Remaining: Caido P1–P4** — `caido_send_request`/`caido_send_raw_request` (replay),
+  `caido_create_finding`/`caido_list_findings`, scope management (`caido_list_scopes`/
+  `caido_add_scope`), richer query/export. Add `readOnlyHint`/`destructiveHint` annotations to the
+  tools (already read-only; needs destructive ones surfaced for replay/send).
+- **Remaining: Playwright surfacing (Thread 3)** — a `browser` tool in `extensions/pi-playwright`
+  so the model does dynamic testing via a callable tool instead of hand-writing Node scripts.
+
 ## Caido project persistence (documented; credentials deferred)
 - Caido data lives under `<engagement>/.caido/` (persists); the MITM CA is generated on first run
   under `.caido/certs/` (persists).
