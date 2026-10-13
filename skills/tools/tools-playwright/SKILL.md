@@ -12,6 +12,18 @@ Playwright + Chromium is installed globally (`playwright` on PATH, browsers in
 browser testing: SPA crawling, auth flows, XSS/CSRF confirmation, post-login surface
 mapping — anything curl can't model.
 
+## Callable tool (preferred)
+
+The `pi-playwright` extension registers a `browser_navigate` tool — use it for simple fetch-a-page
+needs instead of hand-writing a Node script:
+
+- `browser_navigate { url, wait_for?, extract_text?, screenshot? }` — loads a URL in headless
+  Chromium (proxied through Caido), returns final URL, title, HTTP status, body text, and the
+  request/response trail; optionally saves a screenshot to `/engagement/evidence/`.
+
+Use the Node snippets below when you need multi-step interactions (login → click → read) that a
+single navigation can't model.
+
 ## Launch rules (non-negotiable)
 
 All browser traffic must go through Caido. Always use the container-provided env:

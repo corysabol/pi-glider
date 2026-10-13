@@ -82,8 +82,10 @@ Caveats to handle while pinning:
   `caido_create_finding`/`caido_list_findings`, scope management (`caido_list_scopes`/
   `caido_add_scope`), richer query/export. Add `readOnlyHint`/`destructiveHint` annotations to the
   tools (already read-only; needs destructive ones surfaced for replay/send).
-- **Remaining: Playwright surfacing (Thread 3)** — a `browser` tool in `extensions/pi-playwright`
-  so the model does dynamic testing via a callable tool instead of hand-writing Node scripts.
+- **Done: Playwright surfacing (Thread 3)** — `extensions/pi-playwright` registers a
+  `browser_navigate` tool (Chromium through Caido; returns final URL/title/status/body/trail,
+  optional screenshot). Validated end-to-end in-pi. Multi-step interactions (login → click → read)
+  still use hand-written Node from the `tools-playwright` skill — a follow-up if needed.
 
 ## Caido project persistence (documented; credentials deferred)
 - Caido data lives under `<engagement>/.caido/` (persists); the MITM CA is generated on first run

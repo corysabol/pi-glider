@@ -70,7 +70,7 @@ engagement `.pi/` — useful for engagements that need host-only tooling (e.g. A
 ```
 config/        canonical agentDir templates (models.json, mcp.json, settings.json, APPEND_SYSTEM.md, methodology-tips.md, context-inject.json)
 skills/        source-of-truth skills (core/ = operating manuals; recon/, testing/, tools/, mcp/, workflows/)
-extensions/    Pi extensions (pi-glider-banner: glider header; pi-ctx-injector: inject reference material; pi-caido: Caido GraphQL tools)
+extensions/    Pi extensions (pi-glider-banner: glider header; pi-ctx-injector: inject reference material; pi-caido: Caido GraphQL tools; pi-playwright: browser_navigate tool)
 container/     Dockerfile, docker-compose.yml, entrypoint, pdtm tool list
 templates/     engagement templates (engagement/: RoE, finding, .gitignore; mastg/: MASTG kickoff)
 scripts/       pi-glider (CLI: install / container / --no-container) + install.sh + pi-glider.sh
