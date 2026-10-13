@@ -18,7 +18,7 @@ set -euo pipefail
 #   PI_GLIDER_CONFIG   global agentDir (default ~/.config/pi-glider)
 #   PI_GLIDER_IMAGE    container image (default pi-glider:latest)
 #   PI_GLIDER_CAIDO_UI_PORT     host port for the in-container Caido UI/API (default 5000)
-#   PI_GLIDER_CAIDO_PROXY_PORT  host port for the in-container Caido proxy (default 8080)
+#   PI_GLIDER_CAIDO_PROXY_PORT  host port for the in-container Caido proxy (default 8085)
 #   PI_GLIDER_BIN_DIR   install dir for `self-install` (default ~/.local/bin)
 
 # Resolve the script's real location (follow symlinks) so the CLI works when installed to PATH.
@@ -47,7 +47,7 @@ seed_engagement() {
   fi
   echo "[pi-glider] seeding $pi_dir from $CONFIG_DIR"
   mkdir -p "$pi_dir/sessions"
-  for f in models.json mcp.json settings.json APPEND_SYSTEM.md methodology-tips.md context-inject.json SYSTEM.md; do
+  for f in models.json settings.json APPEND_SYSTEM.md methodology-tips.md context-inject.json SYSTEM.md; do
     [ -f "$CONFIG_DIR/$f" ] && cp "$CONFIG_DIR/$f" "$pi_dir/$f"
   done
   for d in skills prompts extensions; do
@@ -92,7 +92,7 @@ launch_container() {
     -e PI_CODING_AGENT_DIR=/engagement/.pi \
     -v "$dir:/engagement" \
     -p "${PI_GLIDER_CAIDO_UI_PORT:-5000}:5000" \
-    -p "${PI_GLIDER_CAIDO_PROXY_PORT:-8080}:8080" \
+    -p "${PI_GLIDER_CAIDO_PROXY_PORT:-8085}:8080" \
     --add-host=host.docker.internal:host-gateway \
     "$IMAGE"
 }
