@@ -203,10 +203,12 @@ streaming responses through Caido truncates them). Override/extend with `CAIDO_N
 - **UI/API** — `http://host.docker.internal:5000` (published to host `5000`); open
   http://localhost:5000 in your host browser to inspect captured requests.
 
-The `pi-caido` extension surfaces the captured traffic to the agent as callable tools
-(`caido_list_requests`, `caido_get_request`, `caido_get_response`, `caido_list_sitemap`,
-`caido_view_sitemap_entry`) that wrap Caido's GraphQL API (guest auth, no seeded credentials).
-This lets the model *read* what it has proxied — see `skills/tools/tools-caido` for usage.
+The `pi-caido` extension surfaces Caido to the agent as callable tools that wrap Caido's GraphQL
+API (guest auth, no seeded credentials): read captured traffic (`caido_list_requests`,
+`caido_get_request`, `caido_get_response`, `caido_list_sitemap`, `caido_view_sitemap_entry`),
+replay/send (`caido_send_request`, `caido_send_raw_request`), record findings
+(`caido_list_findings`, `caido_create_finding`), manage scope (`caido_list_scopes`,
+`caido_add_scope`), and export (`caido_export_requests`). See `skills/tools/tools-caido` for usage.
 
 A static EC (P-256) MITM CA is generated on first run and persisted under `<engagement>/.caido/certs/`
 so it survives image rebuilds; it is installed into the system trust store at runtime and imported

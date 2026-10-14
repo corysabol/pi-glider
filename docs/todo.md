@@ -75,17 +75,16 @@ Caveats to handle while pinning:
 - Future MCP integrations should use Pi's built-in `/mcp`; the native config schema is TBD (don't
   guess it). The in-container **Caido** proxy remains the capture point for web traffic.
 
-## Agent integration — in progress (see docs/agent-integration-plan.md)
-- **Done:** skills index + routing (Thread 1); `extensions/pi-caido` P0 read-only tools
-  (Thread 2 — list/get request, get response, list/view sitemap; GraphQL validated vs Caido 0.56).
-- **Remaining: Caido P1–P4** — `caido_send_request`/`caido_send_raw_request` (replay),
-  `caido_create_finding`/`caido_list_findings`, scope management (`caido_list_scopes`/
-  `caido_add_scope`), richer query/export. Add `readOnlyHint`/`destructiveHint` annotations to the
-  tools (already read-only; needs destructive ones surfaced for replay/send).
-- **Done: Playwright surfacing (Thread 3)** — `extensions/pi-playwright` registers a
-  `browser_navigate` tool (Chromium through Caido; returns final URL/title/status/body/trail,
-  optional screenshot). Validated end-to-end in-pi. Multi-step interactions (login → click → read)
-  still use hand-written Node from the `tools-playwright` skill — a follow-up if needed.
+## Agent integration (see docs/agent-integration-plan.md)
+- **Done (Thread 2 — Caido):** `extensions/pi-caido` full P0–P4 tool set, all GraphQL-validated
+  against Caido 0.56: P0 read (list/get request+response, list/view sitemap), P1 replay
+  (`caido_send_request`, `caido_send_raw_request`), P2 findings (`caido_list_findings`,
+  `caido_create_finding`), P3 scope (`caido_list_scopes`, `caido_add_scope`), P4 export
+  (`caido_export_requests`). Tools carry `readOnlyHint`/`destructiveHint` annotations.
+- **Done (Thread 1 — skills):** skills index + routing + sharpened `APPEND_SYSTEM.md`.
+- **Done (Thread 3 — Playwright):** `extensions/pi-playwright` `browser_navigate` tool (validated
+  end-to-end in-pi). Follow-up (lower priority): multi-step browser interactions (login → click →
+  read) as a richer tool; currently hand-written Node via the `tools-playwright` skill.
 
 ## Caido project persistence (documented; credentials deferred)
 - Caido data lives under `<engagement>/.caido/` (persists); the MITM CA is generated on first run

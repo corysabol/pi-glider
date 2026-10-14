@@ -44,8 +44,10 @@ targets by default. If the target app is served locally, add
 ## Callable tools (preferred)
 
 The `pi-caido` extension registers callable Caido tools — use these instead of hand-writing
-GraphQL when you need to read or replay captured traffic:
+GraphQL. All authenticate as a guest automatically (no token handling); response bodies are
+truncated at 8KB with a flag (open the Caido UI for full data).
 
+**Read (P0)**
 - `caido_list_requests` — list captured requests (optional HTTPQL filter, e.g.
   `req.method.eq:"POST"` / `req.path.cont:"/api/"`).
 - `caido_get_request` — full decoded request (headers + body) by id (from `caido_list_requests`).
@@ -53,8 +55,23 @@ GraphQL when you need to read or replay captured traffic:
 - `caido_list_sitemap` — tree of discovered hosts/directories/requests.
 - `caido_view_sitemap_entry` — one sitemap entry + its recorded requests.
 
-These authenticate as a guest automatically; no token handling needed. Response bodies are
-truncated at 8KB (with a flag) — open the Caido UI for full data.
+**Replay / send (P1)**
+- `caido_send_request { id, raw_override? }` — repeat a captured request and return the live
+  response; pass `raw_override` to test a modified request.
+- `caido_send_raw_request { raw, host, port, tls, sni? }` — send a hand-built raw request.
+
+**Findings (P2)**
+- `caido_list_findings` — list findings already recorded in Caido.
+- `caido_create_finding { request_id, title, description?, reporter? }` — record a finding against
+  a captured request (mirrors the pi-glider finding format).
+
+**Scope (P3)**
+- `caido_list_scopes` — list proxy scopes (allow/deny lists).
+- `caido_add_scope { name, allowlist?, denylist? }` — create a scope (hosts/ranges).
+
+**Export (P4)**
+- `caido_export_requests { filter?, first?, path? }` — write captured requests (raw request +
+  response) to a JSONL file under `/engagement/` for offline analysis/handoff.
 
 ## GraphQL API (raw)
 
