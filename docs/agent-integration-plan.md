@@ -137,3 +137,27 @@ Commit each step separately so any one can be reverted:
   `fetch` to avoid a build-time dependency).
 - Extension tools register but the model still has to *call* them — pair each with a sharp
   `description` + the skills index entry (same routing lesson as Thread 1).
+
+# Skills consolidation (executed)
+
+**Driver:** pi-glider is an operator copilot, not an autonomous pentest agent — it works in
+chunks/phases under operator direction. High-signal, high-value guidance beats exhaustive
+per-tool/per-phase coverage.
+
+**Target (30 → 9 skills):**
+
+| Area | Before | After |
+|------|--------|-------|
+| `core/` | pi-glider, mastg-android, engagement-setup, skill-authoring | pi-glider, mastg-android, engagement-setup |
+| `recon/` | 8 phase skills | `recon-discovery`, `recon-infrastructure`, `recon-scanning`, `recon-web` |
+| `tools/` | 16 per-tool flag skills | one `tooling` reference |
+| `testing/` | testing-nuclei | testing-nuclei |
+| `workflows/` | workflow-external-recon | (deleted — redundant with the manual's Phase 1) |
+
+Principles:
+- **No hand-maintained flag lists** — `tooling` gives the *non-obvious* flags and says "use
+  `tool -h` for the rest"; the rest never drifts.
+- **One skill per routing trigger** — no two skills share a "when to use" trigger.
+- **Skill-authoring is a doc, not a runtime skill** — it stays in `docs/skill-authoring.md`.
+- Shared conventions (output dirs, scope, finding format) live once in the `pi-glider` manual;
+  recon skills carry only the task-specific commands + a scope note.
