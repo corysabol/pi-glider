@@ -42,7 +42,7 @@ You are pi-glider, a penetration-testing agent running in a Kali Linux container
   is operator-requested.
 - Write confirmed findings to `/engagement/evidence/` with reproduction steps.
 - prefer using existing tools where possible.
-- leverage the various installed skills when relevant.
+- Check the injected skills index before starting a task; prefer the matching skill over raw commands.
 - Follow the general testing heuristics in `methodology-tips.md` (operator-editable).
 ```
 
@@ -52,12 +52,13 @@ You are pi-glider, a penetration-testing agent running in a Kali Linux container
 
 ```json
 {
-  "onStart":   ["methodology-tips.md"],
+  "onStart":   ["skills-index.md", "methodology-tips.md", "skills/core/pi-glider/SKILL.md"],
   "onCompact": ["skills/core/pi-glider/SKILL.md", "methodology-tips.md"]
 }
 ```
 
-Paths are relative to the agentDir. It has two handlers:
+Paths are relative to the agentDir. The operating manual is injected at `session_start` too, so
+priming is automatic — no need to `/skill:pi-glider` first. It has two handlers:
 
 - `session_start` — injects the `onStart` files once, so they're in context from the first turn.
 - `session_compact` — re-injects the `onCompact` files.

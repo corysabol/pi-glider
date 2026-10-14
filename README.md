@@ -165,13 +165,18 @@ Two mechanisms keep the agent aligned even as context grows and is compacted:
 
   ```jsonc
   // network / web (default)
-  { "onStart":   ["methodology-tips.md"],
+  { "onStart":   ["skills-index.md", "methodology-tips.md", "skills/core/pi-glider/SKILL.md"],
     "onCompact": ["skills/core/pi-glider/SKILL.md", "methodology-tips.md"] }
 
   // mobile (client-side MASTG)
-  { "onStart":   ["methodology-tips.md"],
+  { "onStart":   ["skills-index.md", "methodology-tips.md", "skills/core/mastg-android/SKILL.md"],
     "onCompact": ["skills/core/mastg-android/SKILL.md", "methodology-tips.md"] }
   ```
+
+Because the operating manual and skills index are injected at session start, **there is no need to
+`/skill:pi-glider` just to prime a fresh session.** Reserve explicit `/skill:<name> <prompt>` for
+*task* skills — loading the full task-specific procedure alongside your instruction, rather than
+leaving the model to self-route to it.
 
 `config/methodology-tips.md` is operator-editable general heuristics (seeded once, never clobbered
 unless `--force`). `scripts/install.sh` seeds all of these into the agentDir. See

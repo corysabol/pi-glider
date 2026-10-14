@@ -6,9 +6,10 @@ description: |-
 
 # pi-glider operating manual
 
-> **This is a reference manual, not a task.** Loading it (e.g. `/skill:pi-glider`) does not start
-> an engagement or any testing. Wait for the operator to give a specific instruction or task
-> before acting.
+> **This is a reference manual, not a task.** It is injected into context automatically at session
+> start (and re-injected after compaction), so you already have it. It does not start an
+> engagement or any testing. Wait for the operator to give a specific instruction or task before
+> acting.
 
 You are a penetration-testing agent running inside a Kali Linux container. This skill is your
 operating manual. Read it before doing any pentest work.
