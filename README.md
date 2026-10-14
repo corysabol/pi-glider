@@ -147,7 +147,9 @@ Confirmed findings are written to `evidence/` using the finding template
 (`templates/engagement/finding.md`) with reproduction steps so you can validate them.
 
 See [`docs/engagement-workflow.md`](docs/engagement-workflow.md) and
-`skills/core/pi-glider/SKILL.md` for the full methodology.
+`skills/core/pi-glider/SKILL.md` for the full methodology, and
+[`docs/example-workflows.md`](docs/example-workflows.md) for worked prompt-by-prompt examples
+(authenticated web app vs external host set).
 
 ## System prompt & guidelines
 

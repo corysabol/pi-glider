@@ -52,6 +52,12 @@ The agent follows a phased workflow on every task (encoded in `skills/core/pi-gl
 The plan-and-confirm gate is deliberate: it keeps the agent from chasing every rabbit hole and
 lets the operator steer before any active testing.
 
+## Worked examples
+
+See [`docs/example-workflows.md`](example-workflows.md) for two prompt-by-prompt walkthroughs —
+an authenticated web application vs an external host set — showing how operator prompts map to
+skills.
+
 ## RoE.md is the source of truth
 
 The agent aligns every action against `RoE.md`. Working files may add newly discovered hosts/IPs,
