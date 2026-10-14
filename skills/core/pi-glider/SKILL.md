@@ -151,7 +151,9 @@ Prefer loading the matching skill over improvising raw commands. Dispatch by int
 
 - Subdomains + DNS → `/skill:recon-discovery` · CIDR/cloud/ASN → `/skill:recon-infrastructure`
 - Ports/services → `/skill:recon-scanning` · Live hosts + fingerprint + JS → `/skill:recon-web`
-- Nuclei → `/skill:testing-nuclei` · Toolchain/flags/integrations → `/skill:tooling`
+- Web app mapping → `/skill:testing-web-map` · OWASP Top 10 sweep → `/skill:testing-owasp-top10`
+- Access control / auth (IDOR/priv-esc) → `/skill:testing-access-control` · Injection → `/skill:testing-injection`
+- Misconfig / crypto → `/skill:testing-misconfig` · Nuclei → `/skill:testing-nuclei` · Flags → `/skill:tooling`
 
 Caido traffic and browser work are surfaced as `caido_*` / `browser_*` tools (see `tooling`).
 

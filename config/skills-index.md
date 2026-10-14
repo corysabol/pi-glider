@@ -20,6 +20,11 @@ session start; reload it with `/skill:pi-glider` if you lose it after compaction
 
 ## Active testing
 
+- Begin a broad web assessment (OWASP Top 10) → `testing-owasp-top10`
+- Map an in-scope web application (endpoints, params, roles) → `testing-web-map`
+- Test access control / authorization (IDOR, priv-esc) and authentication → `testing-access-control`
+- Test injection flaws (SQLi, XSS, command, SSTI, XXE, SSRF) → `testing-injection`
+- Test misconfiguration and crypto failures (default creds, headers, TLS) → `testing-misconfig`
 - Run Nuclei vulnerability scans → `testing-nuclei`
 
 ## Tool reference

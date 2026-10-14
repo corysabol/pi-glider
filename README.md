@@ -83,8 +83,9 @@ Skills follow the [Agent Skills standard](https://agentskills.io/specification) 
 portable across Pi, Claude Code, and Bionic. See [`docs/skill-authoring.md`](docs/skill-authoring.md).
 
 Categories: `core/` (operating manuals — `pi-glider` for network/web, `mastg-android` for mobile —
-plus engagement setup), `recon/` (discovery, infrastructure, scanning, web), `testing/` (nuclei),
-and `tools/` (a single `tooling` reference).
+plus engagement setup), `recon/` (discovery, infrastructure, scanning, web), `testing/` (web app
+mapping + OWASP Top 10: access control, injection, misconfig, nuclei), and `tools/` (a single
+`tooling` reference).
 
 ## Engagement types
 

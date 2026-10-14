@@ -10,7 +10,7 @@ Claude Code, and Bionic.
 skills/
 ├── core/        operational/meta: engagement lifecycle, scope, evidence, safety
 ├── recon/       recon: discovery (subdomains/DNS), infrastructure (CIDR/cloud/ASN), scanning (ports), web (HTTP probe + fingerprint + JS)
-├── testing/     active testing: nuclei
+├── testing/     active testing: web-map, owasp-top10, access-control, injection, misconfig, nuclei
 └── tools/       a single `tooling` reference (which tool, key flags, integrations)
 ```
 
