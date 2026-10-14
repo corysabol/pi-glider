@@ -84,8 +84,8 @@ portable across Pi, Claude Code, and Bionic. See [`docs/skill-authoring.md`](doc
 
 Categories: `core/` (operating manuals — `pi-glider` for network/web, `mastg-android` for mobile —
 plus engagement setup), `recon/` (discovery, infrastructure, scanning, web), `testing/` (web app
-mapping + OWASP Top 10: access control, injection, misconfig, nuclei), and `tools/` (a single
-`tooling` reference).
+mapping + OWASP Top 10: access control, injection, misconfig; API Top 10: inventory, authz, authn;
+nuclei), and `tools/` (a single `tooling` reference).
 
 ## Engagement types
 
