@@ -60,8 +60,8 @@ The skills descriptions are already in the system prompt; the fix is to make the
 rather than rely on a local model weighting 24 bare descriptions. In order:
 
 1. **Add a skills index** — a single `config/skills-index.md` mapping intent → skill
-   ("enumerate subdomains → `recon-subdomain-enumeration`", "dynamic browser testing →
-   `tools-playwright`", etc.), injected via `context-inject.json` `onStart` (alongside
+   ("enumerate subdomains → `recon-discovery`", "dynamic browser testing →
+   `tooling`", etc.), injected via `context-inject.json` `onStart` (alongside
    `methodology-tips.md`) so it is always in context from message one.
 2. **Add an explicit routing dispatch table** to `skills/core/pi-glider/SKILL.md` (`## Skill
    routing`) so the operating manual (re-injected on compact) tells the model which skill to load
@@ -97,14 +97,14 @@ and declares `readOnlyHint`/`destructiveHint` annotations so a future permission
 destructive ops.
 
 The GraphQL queries are pinned to the installed Caido version's schema; verify field names via
-`__type` introspection at runtime (the `tools-caido` skill already documents the `requests`
+`__type` introspection at runtime (the `tooling` skill already documents the `requests`
 connection shape).
 
 ## Thread 3 — Playwright surfacing (follows Caido)
 
 A small `extensions/pi-playwright/` exposing a `browser` tool (launch routed through
 `$CAIDO_CHROMIUM_ARGS`, navigate, snapshot DOM/screenshot, collect requests), so the model can do
-dynamic testing without hand-writing Node. Reuses the `tools-playwright` skill for guidance; the
+dynamic testing without hand-writing Node. Reuses the `tooling` skill for guidance; the
 tool becomes the callable entry point the skill points at.
 
 ## Implementation order & commit strategy

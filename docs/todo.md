@@ -85,7 +85,7 @@ Caveats to handle while pinning:
 - **Done (Thread 3 — Playwright):** `extensions/pi-playwright` persistent session browser —
   `browser_navigate`, `browser_evaluate`, `browser_screenshot`, `browser_close` (validated
   end-to-end in-pi). Multi-step interactions are done via `browser_evaluate`; flows too complex
-  for one snippet still drop to a Node script via the `tools-playwright` skill (intentional).
+  for one snippet still drop to a Node script via the `tooling` skill (intentional).
 
 ## Caido project persistence (documented; credentials deferred)
 - Caido data lives under `<engagement>/.caido/` (persists); the MITM CA is generated on first run

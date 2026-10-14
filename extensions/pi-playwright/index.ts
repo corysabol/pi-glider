@@ -10,7 +10,7 @@
  *
  * Multi-step flows (login → click → read) are done with `browser_evaluate` (an async JS snippet)
  * against the persistent page. Truly complex scenarios are still best done by writing a Node
- * script — see `tools-playwright` (the model can `require('playwright')` via `NODE_PATH`).
+ * script — see `tooling` (the model can `require('playwright')` via `NODE_PATH`).
  *
  * Playwright is loaded lazily (`await import("playwright")`) so extension startup stays cheap.
  * The single shared page is serialized with a mutex so parallel tool calls can't race it.
@@ -159,7 +159,7 @@ export default function (pi: ExtensionAPI): void {
     name: "browser_evaluate",
     label: "Browser Evaluate",
     description:
-      "Run an async JavaScript snippet in the current page and return its result. Use for interactions and extraction against the persistent page — e.g. click a button, fill a form, then return text. Multi-statement scripts should end with `return <value>`; the returned value is serialized (objects → JSON). For flows too complex for one snippet, write a Node script instead (see tools-playwright).",
+      "Run an async JavaScript snippet in the current page and return its result. Use for interactions and extraction against the persistent page — e.g. click a button, fill a form, then return text. Multi-statement scripts should end with `return <value>`; the returned value is serialized (objects → JSON). For flows too complex for one snippet, write a Node script instead (see tooling).",
     annotations: SIDE_EFFECT,
     parameters: Type.Object({
       js: Type.String({ description: "Async JS to run in the page. Use `return X` to return a value, e.g. `document.querySelector('#submit').click(); await new Promise(r=>setTimeout(r,1500)); return document.body.innerText;`." }),

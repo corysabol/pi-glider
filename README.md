@@ -69,7 +69,7 @@ engagement `.pi/` — useful for engagements that need host-only tooling (e.g. A
 
 ```
 config/        canonical agentDir templates (models.json, settings.json, APPEND_SYSTEM.md, methodology-tips.md, context-inject.json, skills-index.md)
-skills/        source-of-truth skills (core/ = operating manuals; recon/, testing/, tools/, workflows/)
+skills/        source-of-truth skills (core/ = operating manuals; recon/, testing/, tools/)
 extensions/    Pi extensions (pi-glider-banner: glider header; pi-ctx-injector: inject reference material; pi-caido: Caido GraphQL tools; pi-playwright: browser tools)
 container/     Dockerfile, docker-compose.yml, entrypoint, pdtm tool list
 templates/     engagement templates (engagement/: RoE, finding, .gitignore; mastg/: MASTG kickoff)
@@ -83,9 +83,8 @@ Skills follow the [Agent Skills standard](https://agentskills.io/specification) 
 portable across Pi, Claude Code, and Bionic. See [`docs/skill-authoring.md`](docs/skill-authoring.md).
 
 Categories: `core/` (operating manuals — `pi-glider` for network/web, `mastg-android` for mobile —
-plus authoring and engagement setup), `recon/` (subdomain, DNS, port, HTTP, fingerprint, JS, cloud,
-CIDR), `testing/` (nuclei), `tools/` (per-tool reference), and `workflows/` (external
-recon sweep).
+plus engagement setup), `recon/` (discovery, infrastructure, scanning, web), `testing/` (nuclei),
+and `tools/` (a single `tooling` reference).
 
 ## Engagement types
 
@@ -208,7 +207,7 @@ API (guest auth, no seeded credentials): read captured traffic (`caido_list_requ
 `caido_get_request`, `caido_get_response`, `caido_list_sitemap`, `caido_view_sitemap_entry`),
 replay/send (`caido_send_request`, `caido_send_raw_request`), record findings
 (`caido_list_findings`, `caido_create_finding`), manage scope (`caido_list_scopes`,
-`caido_add_scope`), and export (`caido_export_requests`). See `skills/tools/tools-caido` for usage.
+`caido_add_scope`), and export (`caido_export_requests`). See `skills/tools/tooling` for usage.
 
 A static EC (P-256) MITM CA is generated on first run and persisted under `<engagement>/.caido/certs/`
 so it survives image rebuilds; it is installed into the system trust store at runtime and imported

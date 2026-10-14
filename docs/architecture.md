@@ -79,7 +79,7 @@ back to the global dir to reuse them later.
 ├── methodology-tips.md # operator-editable general testing heuristics
 ├── context-inject.json # ctx-injector onStart/onCompact file lists
 ├── skills-index.md    # intent → skill routing index (injected at session start)
-├── skills/            # skills (core/ operating manuals + recon/testing/tools/workflows)
+├── skills/            # skills (core/ operating manuals + recon/testing/tools)
 ├── prompts/           # prompt templates (optional, operator-defined)
 └── extensions/        # extensions (pi-glider-banner, pi-ctx-injector, pi-caido, pi-playwright)
 ```

@@ -13,44 +13,24 @@ session start; reload it with `/skill:pi-glider` if you lose it after compaction
 
 ## External recon
 
-- Enumerate subdomains → `recon-subdomain-enumeration`
-- Resolve / enumerate DNS records → `recon-dns-enumeration`
-- Scan for open ports and services → `recon-port-scanning`
-- Probe live HTTP hosts and crawl the web surface → `recon-http-probe`
-- Fingerprint web technologies and TLS → `recon-fingerprinting`
-- Extract JavaScript files and endpoints → `recon-js-analysis`
-- Map cloud / CDN / ASN infrastructure → `recon-cloud-infrastructure`
-- Expand and validate CIDR ranges for scope → `recon-cidr-scoping`
-- Full external sweep (subdomain → DNS → port → HTTP → fingerprint → crawl) in one pass →
-  `workflow-external-recon`
+- Enumerate subdomains + resolve DNS records → `recon-discovery`
+- Map CIDR ranges, cloud/CDN/WAF, and ASN → `recon-infrastructure`
+- Scan for open ports and services → `recon-scanning`
+- Probe live hosts, fingerprint web/TLS, crawl JS endpoints → `recon-web`
 
 ## Active testing
 
 - Run Nuclei vulnerability scans → `testing-nuclei`
 
-## Tool reference (exact CLI flags for one tool)
+## Tool reference
 
-| Intent | Skill |
-|--------|-------|
-| Passive subdomain enumeration | `tools-subfinder` |
-| Fast port scanning | `tools-naabu` |
-| HTTP probing / tech detection | `tools-httpx` |
-| Web crawling / endpoint + JS discovery | `tools-katana` |
-| Template-based vulnerability scanning | `tools-nuclei` |
-| Fast DNS resolution / record enumeration | `tools-dnsx` |
-| Query search engines/APIs for hosts | `tools-uncover` |
-| TLS fingerprinting / cert inspection | `tools-tlsx` |
-| Detect CDN / WAF / cloud providers | `tools-cdncheck` |
-| Map IPs/domains to ASN / org | `tools-asnmap` |
-| Expand/filter CIDR ranges | `tools-mapcidr` |
-| OOB interaction testing (callbacks) | `tools-interactsh-client` |
-| Send notifications from tool output | `tools-notify` |
-| Route tool traffic through a proxy | `tools-proxify` |
-| In-container Caido proxy + GraphQL API | `tools-caido` |
-| Playwright/Chromium dynamic browser testing | `tools-playwright` |
+A single `tooling` skill covers the toolchain: which tool fits a task, the key flags, and the
+in-container integration (Caido proxy, output dirs, `caido_*`/`browser_*` tools). Load it when
+unsure which tool to use or how to route/run one. Prefer the callable `caido_*` and `browser_*`
+tools for traffic and browser work rather than raw CLIs.
 
 ## Reading captured traffic
 
 To inspect, replay, or annotate captured web traffic, use the Caido tools (`caido_list_requests`,
-`caido_get_request`, `caido_get_response`, …) rather than guessing from raw logs — see
-`tools-caido` for the proxy/API reference.
+`caido_get_request`, `caido_get_response`, …) rather than guessing from raw logs — see `tooling`
+for the proxy/API reference.

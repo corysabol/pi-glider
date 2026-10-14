@@ -8,17 +8,16 @@ Claude Code, and Bionic.
 
 ```
 skills/
-├── core/        operational/meta: engagement lifecycle, scope, evidence, safety, authoring
-├── recon/       recon techniques: subdomain, port, HTTP, crawl, fingerprint, JS, cloud, DNS
-├── testing/     active testing: nuclei, fuzzing, auth, injection, misconfig
-├── tools/       per-tool reference (subfinder, naabu, httpx, katana, nuclei, dnsx, …)
-└── workflows/   operator-defined reusable multi-step workflows
+├── core/        operational/meta: engagement lifecycle, scope, evidence, safety
+├── recon/       recon: discovery (subdomains/DNS), infrastructure (CIDR/cloud/ASN), scanning (ports), web (HTTP probe + fingerprint + JS)
+├── testing/     active testing: nuclei
+└── tools/       a single `tooling` reference (which tool, key flags, integrations)
 ```
 
 Each skill is a directory:
 
 ```
-skills/recon/recon-subdomain-enumeration/
+skills/recon/recon-web/
 ├── SKILL.md          # entry point (required)
 └── reference.md      # optional supporting file (progressive disclosure)
 ```
@@ -29,8 +28,8 @@ Only `name` and `description` are required:
 
 ```yaml
 ---
-name: recon-subdomain-enumeration
-description: Enumerate subdomains for in-scope targets using subfinder and uncover.
+name: recon-web
+description: Probe live hosts with httpx, fingerprint TLS with tlsx, and crawl with katana.
 ---
 ```
 
@@ -54,11 +53,11 @@ description: Enumerate subdomains for in-scope targets using subfinder and uncov
 reference material (full flag lists, cheat sheets, wordlists) in supporting files inside the skill
 folder and reference them from `SKILL.md`. The model reads them only when needed.
 
-## Writing a reusable workflow
+## Writing a multi-step procedure
 
-Operator-defined workflows are just skills in `workflows/`. A workflow skill documents a
-multi-step procedure (e.g. "full external recon sweep") as a sequence of tool invocations and
-skill references, with the same `name` + `description` front matter.
+A multi-step procedure is just a richer recon/testing skill in `recon/` or `testing/` that
+chains several tool invocations in one workflow, with the same `name` + `description` front
+matter (e.g. `recon-web` chains httpx → tlsx → katana).
 
 ## Conventions
 

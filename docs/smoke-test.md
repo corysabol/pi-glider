@@ -28,7 +28,7 @@ git -C pi-glider log --oneline    # expect: the Phase 0 / container / skills com
 cd pi-glider && find . -type f -not -path './.git/*' | sort
 ```
 
-Expect the layout from `README.md`: `config/`, `skills/{core,recon,testing,tools,workflows}`,
+Expect the layout from `README.md`: `config/`, `skills/{core,recon,testing,tools}`,
 `container/`, `templates/`, `scripts/`, `docs/`.
 
 ### A3. Config JSON is valid
