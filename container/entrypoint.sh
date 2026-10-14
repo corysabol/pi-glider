@@ -79,8 +79,11 @@ fi
 # --- System-wide proxy configuration ---------------------------------------
 # Route every proxy-aware client (curl, wget, python/requests, node, ProjectDiscovery
 # tools) through Caido WITHOUT per-tool flags, the same way Strix does. Loopback, the
-# host control plane, and npm's registry are excluded via NO_PROXY so tooling's own
-# calls don't recurse through (or pollute/block) the proxy.
+# host control plane, npm's registry, and GitHub's release/download hosts are excluded
+# via NO_PROXY so tooling's own calls don't recurse through (or pollute/block) the
+# proxy. GitHub is excluded because Pi bootstraps `fd`/`ripgrep` binaries from
+# api.github.com → objects.githubusercontent.com on first launch (and self-updates
+# likewise) — MITM'ing those through Caido 502s and blocks startup.
 #
 # LLM inference is also kept OFF the proxy: MITM'ing streaming inference responses
 # through Caido truncates them. We derive the operator's inference host(s) from
@@ -88,7 +91,7 @@ fi
 # operator-extensible for any other hosts to bypass).
 # NODE_EXTRA_CA_CERTS gives Node-based tools (npm/pi/playwright) the same trust in
 # Caido's MITM CA that curl/python get via REQUESTS_CA_BUNDLE.
-CAIDO_NO_PROXY="${CAIDO_NO_PROXY:-localhost,127.0.0.1,host.docker.internal,registry.npmjs.org}"
+CAIDO_NO_PROXY="${CAIDO_NO_PROXY:-localhost,127.0.0.1,host.docker.internal,registry.npmjs.org,github.com,api.github.com,objects.githubusercontent.com,github-releases.githubusercontent.com,codeload.github.com,raw.githubusercontent.com}"
 
 # Derive the inference baseUrl host(s) from models.json and exclude them from the proxy.
 INFERENCE_NO_PROXY="$(node -e '

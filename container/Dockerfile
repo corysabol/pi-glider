@@ -94,7 +94,7 @@ ENV CAIDO_DATA=/engagement/.caido \
     CAIDO_PROJECT_NAME=engagement \
     CAIDO_PROXY_URL=http://127.0.0.1:8080 \
     CAIDO_CERT_PASS="" \
-    CAIDO_NO_PROXY=localhost,127.0.0.1,host.docker.internal,registry.npmjs.org \
+    CAIDO_NO_PROXY=localhost,127.0.0.1,host.docker.internal,registry.npmjs.org,github.com,api.github.com,objects.githubusercontent.com,github-releases.githubusercontent.com,codeload.github.com,raw.githubusercontent.com \
     REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt \
     SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt \
     CAIDO_CHROMIUM_ARGS="--proxy-server=http://127.0.0.1:8080 --ignore-certificate-errors --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage"
