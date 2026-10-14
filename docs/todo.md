@@ -82,9 +82,10 @@ Caveats to handle while pinning:
   `caido_create_finding`), P3 scope (`caido_list_scopes`, `caido_add_scope`), P4 export
   (`caido_export_requests`). Tools carry `readOnlyHint`/`destructiveHint` annotations.
 - **Done (Thread 1 — skills):** skills index + routing + sharpened `APPEND_SYSTEM.md`.
-- **Done (Thread 3 — Playwright):** `extensions/pi-playwright` `browser_navigate` tool (validated
-  end-to-end in-pi). Follow-up (lower priority): multi-step browser interactions (login → click →
-  read) as a richer tool; currently hand-written Node via the `tools-playwright` skill.
+- **Done (Thread 3 — Playwright):** `extensions/pi-playwright` persistent session browser —
+  `browser_navigate`, `browser_evaluate`, `browser_screenshot`, `browser_close` (validated
+  end-to-end in-pi). Multi-step interactions are done via `browser_evaluate`; flows too complex
+  for one snippet still drop to a Node script via the `tools-playwright` skill (intentional).
 
 ## Caido project persistence (documented; credentials deferred)
 - Caido data lives under `<engagement>/.caido/` (persists); the MITM CA is generated on first run

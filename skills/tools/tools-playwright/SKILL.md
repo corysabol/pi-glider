@@ -12,17 +12,22 @@ Playwright + Chromium is installed globally (`playwright` on PATH, browsers in
 browser testing: SPA crawling, auth flows, XSS/CSRF confirmation, post-login surface
 mapping — anything curl can't model.
 
-## Callable tool (preferred)
+## Callable tools (preferred)
 
-The `pi-playwright` extension registers a `browser_navigate` tool — use it for simple fetch-a-page
-needs instead of hand-writing a Node script:
+The `pi-playwright` extension exposes a persistent, session-scoped Chromium page (proxied through
+Caido) via a small set of tools. Prefer these over hand-writing a Node script for common flows:
 
-- `browser_navigate { url, wait_for?, extract_text?, screenshot? }` — loads a URL in headless
-  Chromium (proxied through Caido), returns final URL, title, HTTP status, body text, and the
-  request/response trail; optionally saves a screenshot to `/engagement/evidence/`.
+- `browser_navigate { url, wait_for? }` — load a URL; returns final URL, title, HTTP status, body
+  text, and the request/response trail. The page persists across calls.
+- `browser_evaluate { js }` — run an async JS snippet in the page and return its result (string,
+  value, or JSON). Use it for interactions and extraction against the persistent page: click,
+  fill, wait, then `return` text. Multi-statement snippets should end with `return <value>`.
+- `browser_screenshot { path? }` — save a screenshot (default `/engagement/evidence/`).
+- `browser_close` — tear down the browser (also auto-closed when the session ends).
 
-Use the Node snippets below when you need multi-step interactions (login → click → read) that a
-single navigation can't model.
+A typical multi-step flow (login → click → read) is one `browser_navigate` plus one
+`browser_evaluate` that fills/clicks and returns the rendered result. For flows too complex for a
+single snippet, drop down to a Node script (below).
 
 ## Launch rules (non-negotiable)
 

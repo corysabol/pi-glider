@@ -234,13 +234,14 @@ Expect the model to call `caido_list_requests` and report the `example.com` requ
 host, status) it proxied moments ago. `caido_get_request` / `caido_get_response` return the decoded
 raw body for a chosen id. This proves the agent can *read* (not just route through) Caido.
 
-### D7. Playwright browser tool is surfaced and capturable
+### D7. Playwright browser tools are surfaced and capturable
 
-The `pi-playwright` extension registers a `browser_navigate` tool. In the TUI, ask the model:
-"navigate to http://example.com/ with browser_navigate and report the page title". Expect the
-model to call `browser_navigate` and report `Example Domain` (status 200), and the request to
-appear in Caido via `caido_list_requests`. This confirms the browser is exposed as a tool, not a
-hand-written-script chore, and its traffic is captured.
+The `pi-playwright` extension registers a persistent browser (`browser_navigate`,
+`browser_evaluate`, `browser_screenshot`, `browser_close`). In the TUI, ask the model:
+"navigate to http://example.com/ with browser_navigate, then use browser_evaluate to return the
+page title". Expect the model to call `browser_navigate` (reporting `Example Domain`, status 200)
+and `browser_evaluate`, and the request to appear in Caido via `caido_list_requests`. This confirms
+the browser is exposed as a tool (not a hand-written-script chore) and its traffic is captured.
 
 ---
 
