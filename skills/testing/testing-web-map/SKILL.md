@@ -9,6 +9,10 @@ Build an inventory of the application's real attack surface before testing. This
 `recon-web` (external footprint — hosts/ports/TLS); here you map the app's own routes, API
 endpoints, parameters, roles, and functionality.
 
+Mapping is **stateful** — browse the app interactively (in Caido or via the browser tools) while
+capturing traffic, since role/state-dependent behavior won't show in a passive crawl. For a deep,
+dedicated API inventory, see `testing-api-map`.
+
 ## Workflow
 
 1. Confirm the app is in scope per `/engagement/RoE.md`; note any credentials/roles provided.
