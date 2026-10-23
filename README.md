@@ -264,3 +264,60 @@ Other knobs there:
 `ANIMATE_FRAMES` (phase steps before freezing, default 8), `TICK_MS` (default 150),
 `CELL_W`/`CELL_H` (cell size in characters, default 4×2 — kept 2:1 so cells render square, since
 terminal cells are ~twice as tall as wide), and the `ALIVE`/`DEAD` glyphs.
+
+# Disclaimer
+
+This tool is intended **only** for use against systems you own or have
+**explicit, written authorization** to test. Unauthorized security testing is
+illegal in most jurisdictions and may carry criminal and civil penalties.
+
+## Authorized use only
+
+By downloading, installing, or using this framework, you agree that:
+
+- You are a security professional, student, or researcher acting within the
+  bounds of the law.
+- You have explicit permission from the system owner to test the target(s) in
+  question.
+- Your testing stays strictly within the agreed scope, timeframe, and rules of
+  engagement.
+
+If you are ever unsure whether a target is in scope, **do not proceed** until
+you have confirmed authorization in writing.
+
+## The agentic/automation caveat
+
+This framework uses automated, agent-driven techniques. Automation can easily
+expand beyond the intended scope — for example, by discovering and probing
+systems, hosts, or services you were not authorized to touch. You are
+responsible for configuring scope boundaries, reviewing agent actions, and
+halting the tool when it approaches the limits of your authorization.
+
+**Automation does not transfer legal responsibility.** You remain personally
+liable for every action the tool takes on your behalf.
+
+## No warranty / liability
+
+This software is provided "as is", without warranty of any kind, express or
+implied, including warranties of merchantability or fitness for a particular
+purpose. The author(s) assume **no liability** for any direct, indirect,
+incidental, special, or consequential damages, or for any illegal or
+unauthorized use of this tool.
+
+## Legal compliance
+
+It is your responsibility to understand and comply with all applicable local,
+state, national, and international laws before using this tool. If in doubt,
+consult a qualified legal professional in your jurisdiction.
+
+## Reporting misuse
+
+If you become aware of this tool being used in an unauthorized or harmful
+manner, please report it via the project's issue tracker or contact the
+maintainer(s) directly.
+
+---
+
+**TL;DR:** Own it or have it in writing. Stay in scope. You, not the tool,
+answer for what happens.
+
