@@ -310,16 +310,10 @@ It is your responsibility to understand and comply with all applicable local,
 state, national, and international laws before using this tool. If in doubt,
 consult a qualified legal professional in your jurisdiction.
 
-## Reporting misuse
-
-If you become aware of this tool being used in an unauthorized or harmful
-manner, please report it via the project's issue tracker or contact the
-maintainer(s) directly.
-
 ---
 
 **TL;DR:** Own it or have it in writing. Stay in scope. You, not the tool,
-answer for what happens.
+answers for what happens.
 
 ## Third-party components
 
