@@ -321,3 +321,14 @@ maintainer(s) directly.
 **TL;DR:** Own it or have it in writing. Stay in scope. You, not the tool,
 answer for what happens.
 
+## Third-party components
+
+This project orchestrates the following tools, each distributed under its
+own license. They are installed at build/runtime from their official sources
+and are not bundled with this project:
+
+- [pi](https://github.com/earendil-works/pi) — MIT
+- [Caido](https://caido.io) — proprietary (licensed separately; see Caido's terms)
+- [Playwright](https://playwright.dev) — Apache 2.0
+- [Chromium](https://www.chromium.org) — BSD, distributed via Playwright
+
