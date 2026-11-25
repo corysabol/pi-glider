@@ -20,7 +20,7 @@ RUN ARCH="$(dpkg --print-architecture)"; \
       *) echo "unsupported arch: $ARCH" >&2; exit 1 ;; \
     esac; \
     NODE_VERSION="$(curl -fsSL https://nodejs.org/dist/index.json \
-      | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' | head -1)"; \
+      | grep -oE '\"v[0-9]+\.[0-9]+\.[0-9]+\"' | head -1 | tr -d '\"')"; \
     echo "Installing Node ${NODE_VERSION} (${N})"; \
     curl -fsSL "https://nodejs.org/dist/${NODE_VERSION}/node-${NODE_VERSION}-${N}.tar.xz" \
       | tar -xJ -C /usr/local --strip-components=1
